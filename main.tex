@@ -1,0 +1,182 @@
+\documentclass{article}
+\usepackage{bera}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{graphicx}
+
+\colorlet{punct}{red!60!black}
+\definecolor{background}{HTML}{EEEEEE}
+\definecolor{delim}{RGB}{20,105,176}
+\colorlet{numb}{magenta!60!black}
+
+\lstdefinelanguage{json}{
+    basicstyle=\normalfont\ttfamily,
+    numbers=left,
+    numberstyle=\scriptsize,
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=lines,
+    backgroundcolor=\color{background},
+    literate=
+     *{0}{{{\color{numb}0}}}{1}
+      {1}{{{\color{numb}1}}}{1}
+      {2}{{{\color{numb}2}}}{1}
+      {3}{{{\color{numb}3}}}{1}
+      {4}{{{\color{numb}4}}}{1}
+      {5}{{{\color{numb}5}}}{1}
+      {6}{{{\color{numb}6}}}{1}
+      {7}{{{\color{numb}7}}}{1}
+      {8}{{{\color{numb}8}}}{1}
+      {9}{{{\color{numb}9}}}{1}
+      {:}{{{\color{punct}{:}}}}{1}
+      {,}{{{\color{punct}{,}}}}{1}
+      {\{}{{{\color{delim}{\{}}}}{1}
+      {\}}{{{\color{delim}{\}}}}}{1}
+      {[}{{{\color{delim}{[}}}}{1}
+      {]}{{{\color{delim}{]}}}}{1},
+}
+
+
+
+\begin{titlepage}
+   \begin{center}
+       \vspace*{1cm}
+       
+       \textbf{\LARGE Master Thesis - SeEDS (Secure and Efficient Data Namespace) }
+       
+       \vspace{1.5cm}
+       \textbf{Author: Fotios Bistas, fot.bistas@aueb.gr}
+       
+       \textbf{Advisor: George Xylomenos, xgeorge@aueb.gr}
+       
+       \textbf{Reviewer: Vasilios Siris, vsiris@aueb.gr}
+       
+       \textbf{Reviewer: George Polyzos, polyzos@aueb.gr}
+
+       \vspace{0.8cm}
+            
+       Department Name: Computer Science\\
+       University Name: Athens University of Economics and Business\\
+       Country: Greece\\
+       Date: October 2025
+       
+       \vspace{0.8cm}
+
+        \includegraphics[width=0.9\textwidth]{images/image.png}
+   \end{center}
+\end{titlepage}
+
+\begin{document}
+
+\section{Introduction}
+
+A \textit{Data Space}, in the sense defined by ETSI ( European Telecommunications Standard Institute ), is a standards-based way
+for many independent organizations to make their data discoverable and usable
+to one another while each party keeps control of its own data. Instead of
+moving everything into one central database, participants adopt common formats,
+interfaces, and policies (identity, consent, usage rules) so they can share
+data securely and auditably across organizational boundaries. This model aims
+to break down today’s “data silos” ( isolated collections of data that prevent data sharing ) and enable new services that combine data
+from multiple sources.
+
+This differs from proprietary Content Delivery Networks (CDNs). CDNs focus on
+fast distribution of static content (e.g., web assets, video) through
+infrastructure operated by a single provider. In contrast, a Data Space
+prioritizes interoperability, governance, and data sovereignty across many
+owners, rather than speed of delivery from one centralized platform.
+
+We have already implemented a simple Data Space based on the \textit{Named Data Networking (NDN)} architecture, in our previous project \textit{NGI Sargasso OC1 SNDS}. This system supported advanced data-driven applications over a fully distributed and self-sovereign identity framework, demonstrating performance and scalability advantages over traditional IP-based networks.
+
+Building upon SNDS, the \textit{Secure and Efficient Data Spaces (SeEDS)} project aims to deliver an ETSI-compliant Data Space solution. The project provides implementations for all required data API operations, including content filtering based on user-defined conditions, as well as optional temporal API operations that enable long-term data storage and retrieval. Specifically, this thesis implements the following goals regarding SeEDS:
+
+\begin{itemize}
+    \item Implement the full NGSI-LD API, including content filtering, temporal operations and event subscriptions.  
+    \item Enhance data space efficiency by providing distributed data intermediaries and migrating content filters to their optimal location.
+    \item Test the SeEDS implementation over the worldwide NDN testbed. 
+\end{itemize}
+
+The NGSI-LD API is a standardized interface for managing and exchanging
+\emph{context information} in data spaces, as specified by ETSI. It provides a
+common, HTTP-based framework that lets content providers, consumers, and
+brokering services create, update, and query \emph{entities}, as well as
+subscribe to change events. In NGSI-LD, each entity is represented in JSON-LD
+and usually consists of a globally unique \texttt{id}, a \texttt{type} (its class),
+and a set of \emph{attributes}. Attributes are either \emph{Properties} (values,
+optionally with metadata such as \texttt{observedAt} or \texttt{unitCode}) or
+\emph{Relationships} (links to other entities). A JSON-LD \texttt{@context}
+binds the terms used to well-defined IRIs, ensuring semantic interoperability.
+
+\begin{lstlisting}[language=json, caption={Example JSON-LD},label={lst:ngsi-ld-json}]
+{ 
+"@id": "urn:seeds:Car:001,
+"@type": "Car,
+"brand":{
+    "type": "Property,
+    "value": "BW
+},
+"dateVehicleFirstRegistered": { 
+    "type": "Property
+    "value": "201
+    "emissionsCO2":{
+        "type": "Property,
+        "value": "2
+    }
+},
+"@context":[
+    "https://example.com/context.jsonl
+] 
+} 
+\end{lstlisting}
+
+This enables SeEDS to support two retrieval modes over its HTTP API: by \texttt{@id} and by \texttt{@type}.
+A \emph{GET by ID} request retrieves a single JSON-LD entity given its globally
+unique \texttt{@id}. A \emph{GET by TYPE} request retrieves all entities that
+match the provided \texttt{@type}. Since \texttt{@type} is optional in SeEDS,
+entities that omit it are treated as having the default \texttt{GENERIC} type.
+
+\noindent\textbf{HTTP usage}
+\begin{itemize}
+  \item \textbf{GET by ID}: returns one entity
+  \begin{verbatim}
+  GET /?id=urn:seeds:car:car001
+  \end{verbatim}
+
+  \item \textbf{GET by TYPE}: returns an array of entities
+  \begin{verbatim}
+  GET /?type=Vehicle
+  \end{verbatim}
+
+  \item \textbf{Implicit type (default)}: entities without @type are treated as
+  \texttt{GENERIC}
+  \begin{verbatim}
+  GET /?type=GENERIC
+  \end{verbatim}
+\end{itemize}
+
+\noindent\textbf{Response shape}
+\begin{itemize}
+  \item GET by ID $\rightarrow$ a single JSON-LD object (the entity).
+  \item GET by TYPE $\rightarrow$ a JSON array of JSON-LD entities.
+\end{itemize}
+
+\section{Architecture}
+
+\section{Implementation}
+
+\subsection{GET BY ID}
+
+\subsection{GET BY TYPE }
+
+\subsection{BY ID SUBSCRIPTIONS}
+
+\subsection{BY TYPE SUBSCRIPTIONS}
+
+\subsection{TEMPORAL QUERIES}
+
+\section{Experiments}
+
+\section{Conclusion}
+
+\end{document}
