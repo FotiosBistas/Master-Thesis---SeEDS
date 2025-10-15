@@ -3,6 +3,8 @@
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{graphicx}
+\usepackage{float}
+
 
 \colorlet{punct}{red!60!black}
 \definecolor{background}{HTML}{EEEEEE}
@@ -64,7 +66,7 @@
        
        \vspace{0.8cm}
 
-        \includegraphics[width=0.9\textwidth]{images/image.png}
+        \includegraphics[width=0.9\textwidth]{images/opa.png}
    \end{center}
 \end{titlepage}
 
@@ -87,7 +89,7 @@ infrastructure operated by a single provider. In contrast, a Data Space
 prioritizes interoperability, governance, and data sovereignty across many
 owners, rather than speed of delivery from one centralized platform.
 
-We have already implemented a simple Data Space based on the \textit{Named Data Networking (NDN)} architecture, in our previous project \textit{NGI Sargasso OC1 SNDS}. This system supported advanced data-driven applications over a fully distributed and self-sovereign identity framework, demonstrating performance and scalability advantages over traditional IP-based networks.
+We have already implemented a simple Data Space based on the \textit{Named Data Networking (NDN)} architecture, in our previous project \textit{NGI Sargasso OC1 SNDS}. Named Data Networking (NDN) is a data-centric networking paradigm that shifts communication from host-based addressing (as in IP networks) to content-based addressing. In NDN, data are identified and retrieved directly by \textit{names} rather than by the location of the host that stores them. Each piece of data is cryptographically signed by its producer, ensuring authenticity and integrity regardless of where it is fetched from. This enables efficient in-network caching, data reuse, and intrinsic security properties that align naturally with the decentralized and self-sovereign principles of Data Spaces. Consequently, NDN networks are particularly well-suited for environments where multiple parties exchange data without relying on centralized servers or trusted intermediaries. Utilizing the NDN the system supported advanced data-driven applications over a fully distributed and self-sovereign identity framework.
 
 Building upon SNDS, the \textit{Secure and Efficient Data Spaces (SeEDS)} project aims to deliver an ETSI-compliant Data Space solution. The project provides implementations for all required data API operations, including content filtering based on user-defined conditions, as well as optional temporal API operations that enable long-term data storage and retrieval. Specifically, this thesis implements the following goals regarding SeEDS:
 
@@ -163,17 +165,51 @@ entities that omit it are treated as having the default \texttt{GENERIC} type.
 
 \section{Architecture}
 
+SeEDS bridges IP and NDN networks via two interfaces. First, it offers an
+HTTP endpoint for exchanging NGSI-LD API messages with IP-based systems.
+Second, it connects to the NDN Forwarding Daemon (NFD) through a netlink
+socket to exchange NDN-specific messages with NDN nodes. Also each SeEDS Service contains a storage instance, where it stores data like locally published IDs, subscribed Nodes etc. The aforementioned are the components of the SeEDS Service. RV ( Rendezvous ) Nodes are nodes that can aggregate content and serve collections of it when queried to.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{images/seeds_architecture.png}
+    \caption{High level SeEDS architecture.}
+    \label{fig:seeds_architecture}
+\end{figure}
+
+\pagebreak
+
+The following is the SeEDS Service components in detail: 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{images/seeds_service_detail.png}
+    \caption{SeEDS Service in detail.}
+    \label{fig:seeds_service_detail}
+\end{figure}
+
+The current architecture enables the SeEDS Service to perform the following operations: 
+
+\begin{itemize}
+    \item Consumers can create a \textit{HTTP GET} request to retrieve items from the NDN network. As mentioned before these are either \emph{GET by TYPE} or {GET by ID}. Note that the \textit{@type} and \textit{@id} need to be provided accordingly. 
+    \item Providers can create \textit{HTTP POST} requests to provide/announce items to the NDN network. The service will also ensure that the data is stored inside its storage, ensuring that the data can be served when requested from some other node in the network. 
+    \item Clients can also subscribe to a specific \textit{@id} or \textit{@type}. Since content in NDN is retrieved by its unique name rather than by host address, clients may express a request for a name even before the corresponding data is available. Once the data is published under that name, the network delivers it to all subscribed clients, enabling efficient and timely notifications.
+    \item The NDN naming scheme also enables any NDN node to act as a \emph{Secondary} for another node within the network. A \emph{Secondary} node inherits the data of its corresponding \emph{Primary} node, including its storage contents, announced \textit{@ids}, \textit{@types} and \textit{subscriptions}. This design enhances the resilience of the SeEDS system, allowing it to recover the data of a failed node seamlessly and maintain service continuity.
+\end{itemize}
+
 \section{Implementation}
 
-\subsection{GET BY ID}
+\subsection{GET by ID}
 
-\subsection{GET BY TYPE }
+\subsection{GET by TYPE}
 
-\subsection{BY ID SUBSCRIPTIONS}
+\subsection{SUBSCRIPTIONS by ID}
 
-\subsection{BY TYPE SUBSCRIPTIONS}
+\subsection{SUBSCRIPTIONS by TYPE}
 
-\subsection{TEMPORAL QUERIES}
+\subsection{Temporal Queries}
+
+\subsection{Resilience}
 
 \section{Experiments}
 
