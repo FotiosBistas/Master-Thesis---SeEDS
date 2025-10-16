@@ -4,6 +4,7 @@
 \usepackage{xcolor}
 \usepackage{graphicx}
 \usepackage{float}
+\usepackage{hyperref}
 
 
 \colorlet{punct}{red!60!black}
@@ -165,6 +166,8 @@ entities that omit it are treated as having the default \texttt{GENERIC} type.
 
 \section{Architecture}
 
+\subsection{SeEDS Service}
+
 SeEDS bridges IP and NDN networks via two interfaces. First, it offers an
 HTTP endpoint for exchanging NGSI-LD API messages with IP-based systems.
 Second, it connects to the NDN Forwarding Daemon (NFD) through a netlink
@@ -197,19 +200,133 @@ The current architecture enables the SeEDS Service to perform the following oper
     \item The NDN naming scheme also enables any NDN node to act as a \emph{Secondary} for another node within the network. A \emph{Secondary} node inherits the data of its corresponding \emph{Primary} node, including its storage contents, announced \textit{@ids}, \textit{@types} and \textit{subscriptions}. This design enhances the resilience of the SeEDS system, allowing it to recover the data of a failed node seamlessly and maintain service continuity.
 \end{itemize}
 
+\subsection{Resilience}
+
+The resilience layer in SeEDS ensures that a \emph{Secondary} node continuously converges towards the state of a \emph{Primary} node through lightweight synchronization protocols built on NDN. At the core of this mechanism lies a versioned canonical JSON store on the \emph{Primary}, which exposes its state through a set of standardized NDN Interests and Data packets. The \emph{Secondary} maintains a local mirror of this store, applying updates received from the network and validating them against deterministic fingerprints.
+
+The \emph{Primary} store maintains a bounded history of mutations. Each change increments a version counter, recomputes a canonical hash of the entire state, and records a snapshot to support future patch generation. It responds to queries with one of three data views: a lightweight metadata descriptor containing only the version and hash; a delta, represented as an RFC 6902 JSON Patch from one version to another; or a full snapshot of the canonical state. The \emph{Secondary} mirror accepts these responses and applies them locally. Whenever patch application fails, or when the requested patch is unavailable, the mirror falls back to a snapshot, ensuring eventual consistency even in the presence of divergence.
+
+The resilience system is designed to handle failures gracefully. If the poller records consecutive failures in its liveness probes that exceed a configurable threshold, the \emph{Secondary} promotes itself to \emph{Primary} and terminates the polling loop. This self-promotion is communicated to the local services through IPC, ensuring that the system can continue to operate without interruption despite the failure of the original \emph{Primary}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{images/resilience_seeds.png}
+    \caption{Resilience architecture in SeEDS.}
+    \label{fig:resilience_architecture}
+\end{figure}
+
 \section{Implementation}
 
-\subsection{GET by ID}
+The implementation described in this section reflects the state of the SeEDS system as of October 2025. As the project continues to evolve, certain design choices, component interfaces, or architectural details may change to accommodate new requirements, optimizations, or future redesigns. Therefore, this documentation should be considered a snapshot of the current implementation rather than a definitive or final version.
 
-\subsection{GET by TYPE}
 
-\subsection{SUBSCRIPTIONS by ID}
+\subsection{Announcing Content}
+
+When a node intends to announce content within the NDN network, it does so by advertising specific names. Consumers can then retrieve the corresponding content by \emph{expressing Interests} for these names. Each node in the network possesses a unique identifier (e.g., Node~1 on the left and Node~2 on the right). As illustrated in messages \emph{(0)} and \emph{(1)}, each node initially announces the base \textit{SeEDS} name concatenated with its unique identifier, forming the name \textit{SeEDS\textunderscore ID}. In addition, each node announces a \emph{scope} under a name of the form \textit{ID\textunderscore scopeID}. If a node is responsible for a particular registry or entity type—such as the \textit{CAR\textunderscore registry} in this example, shown in messages \emph{(2)} and \emph{(3)} —it also advertises the corresponding \textit{TYPE} and \textit{TYPE\textunderscore REGISTRY} names, enabling it to respond to Interests related to that registry.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{images/announce_content.png}
+    \caption{Announcing content inside the NDN network.}
+    \label{fig:annoucing_content}
+\end{figure}
+
+Following the initial announcements, a new client intends to provide an entity with \textit{@id = car1} of type \textit{@type = CAR}. When this new \textit{@id} arrives, the receiving SeEDS Service first announces it locally, as illustrated in message~\emph{(5)}. It must then \emph{express an Interest}, as shown in message~\emph{(6)}, for the \textit{@type = CAR} registry so that the responsible node can store the new entry in the registry. The responsible node replies with an \emph{ACK} message, confirming that \textit{@id = car1} has been successfully registered under \textit{@type = CAR}. If the client’s \emph{HTTP request} does not explicitly specify a \textit{@type}, the system omits messages~\emph{(6)} and~\emph{(7)} and only announces the \textit{@id = car1} within the network.
+
+\subsection{GET by ID}\label{get_by_id_section}
+
+
+
+After an \textit{@id} is published into the network users can retrieve its content. Users create an \emph{HTTP Request} and specify the \textit{@id} that they want to retrieve, as shown in message \emph{(0)}. The SeEDS Service processes the message internally and \emph{expresses an interest} involving the \textit{@id=car1} inside the name, as shown in message \emph{(1)}. Note that messages~\emph{(0)} and~\emph{(1)} are identical in both the \emph{Direct} and \emph{Indirect} modes of the \texttt{GET by ID} operation. The choice of modes occurs dynamically depending on the data received by \textit{ProcessQueries()}. Moreover in both \emph{Direct} and \emph{Indirect} modes, the processing of filters occurs before the final data is returned to the user via the HTTP interface. Only the fields explicitly specified in the filter conditions are retained in the output. 
+
+
+\subsubsection{Direct Mode}
+
+\emph{Direct mode} occurs when the data processed by \textit{ProcessQueries()} is classified as a \emph{small payload}. In this case, the SeEDS Service responsible for the corresponding \textit{@id} responds \emph{directly} with the JSON payload, as illustrated in message~\emph{(2)}. The SeEDS Service that initially received the \emph{HTTP request} then forwards this data back to the client as the final response.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{images/get_by_id_direct.png}
+    \caption{GET by ID direct mode.}
+    \label{fig:get_by_id_direct}
+\end{figure}
+
+\subsubsection{Indirect Mode}
+
+\emph{Indirect mode} occurs when the data processed by \textit{ProcessQueries()} is classified as a \emph{large payload}. In this case, the SeEDS Service responsible for the corresponding \textit{@id} does not transmit the full JSON directly. Instead, it responds with a \emph{metafile}, as illustrated in message~\emph{(2)}. The \emph{metafile} contains a list of \textit{@v\_ids}, which represent the individual \textit{@ids} along with their respective versions. Upon receiving the \emph{metafile}, the SeEDS Service that originally handled the \emph{HTTP request} proceeds to \emph{express Interests} for the specific \textit{@id} and each associated version. This effectively reinitiates the retrieval process in the same manner as a \emph{Direct mode} request, just for a specific version. The version can be represented in various forms, such as a timestamp, a numerical identifier, or any other scheme that uniquely distinguishes different instances of the same entity.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{images/get_by_id_indirect.png}
+    \caption{GET by ID indirect mode.}
+    \label{fig:get_by_id_indirect}
+\end{figure}
+
+\pagebreak 
+
+\subsection{GET by TYPE}\label{get_by_type_section}
+
+Users can also request data associated with a specific \textit{@type}. As illustrated in message~\emph{(0)}, the \emph{content consumer} specifies the desired \textit{@type} in the request sent to the SeEDS Service. The SeEDS Service that receives the \emph{HTTP Request} proceeds to \emph{express an Interest} in the NDN network, as shown in message~\emph{(1)}. The SeEDS Service responsible for the corresponding registry then receives this Interest and responds with the list of \textit{@ids} registered under that \textit{@type}, as shown in message~\emph{(2)}. After obtaining the list of \textit{@ids}, the SeEDS Service that originally handled the \emph{HTTP request} performs a separate \hyperref[get_by_id_section]{GET by ID} operation for each \textit{@id} to retrieve the associated data.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{images/get_by_type.png}
+    \caption{GET by TYPE.}
+    \label{fig:get_by_type}
+\end{figure}
+
+\pagebreak
+
+\subsection{SUBSCRIPTIONS by ID}\label{subscriptions_by_id_section}
+
+Consumers can also subscribe to a specific \textit{@id}. Once content associated with that \textit{@id} becomes available, the system automatically notifies the subscribed consumers and delivers the corresponding data. This mechanism allows consumers to subscribe to \textit{@ids} even before the data has been published. 
+
+A consumer that wishes to subscribe to an \textit{@id} must specify the target identifier, as illustrated in message~\emph{(0)}. Upon receiving the \emph{HTTP request}, the SeEDS Service proceeds to \emph{express an Interest} containing both the responsible \emph{ID\_SCOPEID} for the given \textit{@id}—determined via a hashing function—and its own \emph{ID\_SCOPEID}, as shown in message~\emph{(1)}. When the responsible \emph{ID\_SCOPEID} receives this Interest, it records the sender’s \emph{ID\_SCOPE} as a subscriber for the specified \textit{@id} and responds with an \emph{ACK}, as depicted in message~\emph{(2)}.
+
+When new data for the subscribed \textit{@id} is announced, the system checks for any existing subscribers and notifies them through their respective scopes that new content has become available, as shown in message~\emph{(3)}. The notified SeEDS Service then initiates a \hyperref[get_by_id_section]{GET by ID} operation to retrieve the newly published data.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{images/subscribe_by_id.png}
+    \caption{Subscribe by ID.}
+    \label{fig:subscribe_by_id}
+\end{figure}
 
 \subsection{SUBSCRIPTIONS by TYPE}
 
-\subsection{Temporal Queries}
+Consumers can also subscribe to a specific \textit{@type}. In this case ( unlike \hyperref[subscriptions_by_id_section]{SUBSCRIBE by ID} ) , the subscription is linked to an already announced registry scope, so there is no need to compute a hash for the \textit{@type}. When the registry receives new data entries for that \textit{@type}, all subscribed consumers are notified that an update has occurred. 
+
+As shown in message~\emph{(0)}, the consumer specifies the target \textit{@type} in the \emph{HTTP Request} sent to the SeEDS Service. Upon receiving the \emph{HTTP request}, the SeEDS Service expresses an \emph{Interest} toward the corresponding registry scope associated with that \textit{@type}, as illustrated in message~\emph{(1)}. The registry records the SeEDS Service that issued the Interest as a subscriber ( the diagram doesn't use \emph{ID\_SCOPE} but \emph{SeEDS\_ID} which is equivalent ) and replies with an \emph{ACK}, confirming that the subscription has been successfully registered, as shown in message~\emph{(2)}.
+
+When new data is added to the registry for the subscribed \textit{@type}, the system notifies all registered subscribers, as depicted in message~\emph{(3)}. Upon receiving the notification, the SeEDS Service proceeds to perform a \hyperref[get_by_type_section]{GET by TYPE} operation to retrieve the updated content.
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{images/subscribe_by_type.png}
+    \caption{Subscribe by type.}
+    \label{fig:subscribe_by_type}
+\end{figure}
+
+\pagebreak 
 
 \subsection{Resilience}
+
+Figure~\ref{fig:resilience} illustrates the message exchange that keeps a \emph{Secondary} SeEDS service converged with a remote \emph{Primary} over the NDN network. The \emph{Secondary} (left lane) runs two lightweight polling loops in parallel: (i) a \emph{state convergence} loop that tracks the \textit{state} of the Primary’s canonical store, and (ii) a \emph{liveness} loop that verifies that the remote service is responsive. Both loops use standardized Interests and Data packets and carry only minimal material (hashes, patches-snapshots, nonces) to limit overhead.
+
+As shown in message~\emph{(0)}, the Primary has announced its state namespace \texttt{\{state\_2\}} in the NDN network, so other Services in the network can \emph{express interests} for it. The currently manually set Secondary initiates its state convergence loop by expressing an \emph{Interest} for the corresponding state hash, as depicted in message~\emph{(2)}. The returned \emph{Data} packet, shown in message~\emph{(3)}, contains the current hash and either a patch encoded as an RFC~6902 JSON Patch or an RFC~6902 Snapshot. The Secondary compares this hash with the locally stored version, and when a mismatch is detected, it applies the received patch or the snapshot, if the patch cannot be applied, to synchronize its local mirror with the Primary. 
+
+Parallel to the state convergence loop, the Secondary executes a liveness verification loop to confirm that the Primary remains reachable. As illustrated in message~\emph{(1)}, the Primary advertises its liveness namespace \texttt{\{is\_alive\_2\}}. The Secondary periodically expresses \emph{Interest} packets containing a fresh nonce, as shown in message~\emph{(4)}. The Primary responds with a corresponding \emph{Data} packet that echoes the nonce and includes an acknowledgment, as depicted in message~\emph{(5)}. 
+
+If the Secondary records consecutive failures in its liveness probes beyond a predefined threshold, it promotes itself to the \emph{Primary} and terminates the polling loop. This promotion is internally communicated to the SeEDS services through IPC, ensuring that operation continues uninterrupted even in the absence of the original Primary. This mechanism, SeEDS achieves distributed fault tolerance, maintaining service availability despite network or node failures.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{images/resilience.png}
+    \caption{Resilience message exchange in SeEDS.}
+    \label{fig:resilience}
+\end{figure}
 
 \section{Experiments}
 
