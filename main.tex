@@ -479,15 +479,91 @@ a:d delay=10ms
 
 \subsubsection{GET by ID}
 
-First we need to publish the \textit{@ids} in the NDN network: 
+We have already published the \textit{@ids=car1,car2,car3} in the NDN network, through \emph{node A ( producer )}.
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=1\linewidth]{images/publish_id_minindn.png}
-    \caption{Publish the @ids in the NDN network. Pay attention here that we publish \textit{@id=car22132113asfsdsad} (yes this was a sanity check) and \textit{@id=car2}. The output of the second \emph{CURL}, corresponds to the previous publish due to a design problem that needs to be addressed.}
-    \label{fig:publish_ids_minindn}
-\end{figure}
 
+Let's try to retrieve the \textit{@id=car1} through \emph{node B}:
+
+\begin{lstlisting}[language=log, caption={Node's B log after performing a GET by ID for car1}, label={lst:node-b-log-file-car1}]
+[2025-09-25 00:33:40.583] [debug] [Consumer] Extracted content from message: /SNDS/car1/getByID:car1
+[2025-09-25 00:33:40.583] [debug] [Consumer] Extracted content length from message: 23
+[2025-09-25 00:33:40.583] [debug] [Consumer] Extracted message type from message: GET_BY_ID_REQUEST
+[2025-09-25 00:33:40.583] [debug] [Consumer] Query.type: 
+[2025-09-25 00:33:40.583] [debug] [Consumer] Query.id: car1
+[2025-09-25 00:33:40.583] [info] [Consumer] Created name /SNDS/car1/temporalQuery:id%3Dcar1&type%3D&date%3D&count%3D&timeframe%3D&filters%3D
+[2025-09-25 00:33:40.583] [info] [Consumer] Sending actual Interest /SNDS/car1/temporalQuery%3Aid%3Dcar1%26type%3D%26date%3D%26count%3D%26timeframe%3D%26filters%3D?CanBePrefix&Lifetime=6000
+[2025-09-25 00:33:40.585] [info] [Consumer] Received Data with name: /SNDS/car1/temporalQuery%3Aid%3Dcar1%26type%3D%26date%3D%26count%3D%26timeframe%3D%26filters%3D in function onData
+[2025-09-25 00:33:40.585] [info] [Consumer] Data packet payload: [
+  {
+    "": {
+      "_id": "car1",
+      "id": "car1",
+      "timestamp": {
+        "$date": 1758749528574
+      },
+      "type": "GENERIC"
+    }
+  }
+] in function onData
+[2025-09-25 00:33:40.585] [info] [Consumer] Parsed interest: Prefix: SNDS, Name: car1, Command: temporalQuery, Params: [id=car1, type=, date=, count=, timeframe=, filters=] in onData
+[2025-09-25 00:33:40.585] [info] [Consumer] Temporal Query Reponse... 
+\end{lstlisting}
+
+\pagebreak 
+
+Let's try to retrieve the \textit{@id=car2} through \emph{node C}:
+\begin{lstlisting}[language=log, caption={Node's C log after performing a GET by ID for car2}, label={lst:node-c-log-file-car2}]
+[2025-09-25 00:42:10.775] [debug] [Consumer] Extracted content from message: /SNDS/car2/getByID:car2
+[2025-09-25 00:42:10.775] [debug] [Consumer] Extracted content length from message: 23
+[2025-09-25 00:42:10.775] [debug] [Consumer] Extracted message type from message: GET_BY_ID_REQUEST
+[2025-09-25 00:42:10.775] [debug] [Consumer] Query.type: 
+[2025-09-25 00:42:10.775] [debug] [Consumer] Query.id: car2
+[2025-09-25 00:42:10.775] [info] [Consumer] Created name /SNDS/car2/temporalQuery:id%3Dcar2&type%3D&date%3D&count%3D&timeframe%3D&filters%3D
+[2025-09-25 00:42:10.775] [info] [Consumer] Sending actual Interest /SNDS/car2/temporalQuery%3Aid%3Dcar2%26type%3D%26date%3D%26count%3D%26timeframe%3D%26filters%3D?CanBePrefix&Lifetime=6000
+[2025-09-25 00:42:10.777] [info] [Consumer] Received Data with name: /SNDS/car2/temporalQuery%3Aid%3Dcar2%26type%3D%26date%3D%26count%3D%26timeframe%3D%26filters%3D in function onData
+[2025-09-25 00:42:10.777] [info] [Consumer] Data packet payload: [
+  {
+    "": {
+      "_id": "car2",
+      "id": "car2",
+      "timestamp": {
+        "$date": 1758749532578
+      },
+      "type": "GENERIC"
+    }
+  }
+] in function onData
+[2025-09-25 00:42:10.777] [info] [Consumer] Parsed interest: Prefix: SNDS, Name: car2, Command: temporalQuery, Params: [id=car2, type=, date=, count=, timeframe=, filters=] in onData
+\end{lstlisting}
+
+\pagebreak
+
+Let's try to retrieve the \textit{@id=car3} through \emph{node D}:
+\begin{lstlisting}[language=log, caption={Node's D log after performing a GET by ID for car3}, label={lst:node-d-log-file-car3}]
+[2025-09-25 00:38:19.399] [debug] [Consumer] Extracted content from message: /SNDS/car3/getByID:car3
+[2025-09-25 00:38:19.399] [debug] [Consumer] Extracted content length from message: 23
+[2025-09-25 00:38:19.399] [debug] [Consumer] Extracted message type from message: GET_BY_ID_REQUEST
+[2025-09-25 00:38:19.399] [debug] [Consumer] Query.type: 
+[2025-09-25 00:38:19.399] [debug] [Consumer] Query.id: car3
+[2025-09-25 00:38:19.399] [info] [Consumer] Created name /SNDS/car3/temporalQuery:id%3Dcar3&type%3D&date%3D&count%3D&timeframe%3D&filters%3D
+[2025-09-25 00:38:19.399] [info] [Consumer] Sending actual Interest /SNDS/car3/temporalQuery%3Aid%3Dcar3%26type%3D%26date%3D%26count%3D%26timeframe%3D%26filters%3D?CanBePrefix&Lifetime=6000
+[2025-09-25 00:38:19.400] [info] [Consumer] Received Data with name: /SNDS/car3/temporalQuery%3Aid%3Dcar3%26type%3D%26date%3D%26count%3D%26timeframe%3D%26filters%3D in function onData
+[2025-09-25 00:38:19.400] [info] [Consumer] Data packet payload: [
+  {
+    "": {
+      "_id": "car3",
+      "id": "car3",
+      "timestamp": {
+        "$date": 1758749534580
+      },
+      "type": "GENERIC"
+    }
+  }
+] in function onData
+[2025-09-25 00:38:19.400] [info] [Consumer] Parsed interest: Prefix: SNDS, Name: car3, Command: temporalQuery, Params: [id=car3, type=, date=, count=, timeframe=, filters=] in onData
+\end{lstlisting}
+
+\pagebreak
 
 Here are the logs of the Producer, receiving requests from the other Nodes that requested the \textit{@id}: 
 
@@ -513,6 +589,11 @@ Here are the logs of the Producer, receiving requests from the other Nodes that 
 [2025-09-25 00:35:41.241] [info] [Producer] Successfully queried /temporal-query
 [2025-09-25 00:35:41.241] [debug] [Producer] Sending data to the NDN… 
 \end{lstlisting}
+
+We can see that within the described Mini-NDN topology, node \texttt{a} acts as the producer responsible for serving data associated with specific \textit{@ids}. Because all nodes are interconnected, any node in the network can retrieve content produced by node \texttt{a}. Nodes \texttt{b} and \texttt{c} communicate with \texttt{a} via direct paths within the triangular core, enabling efficient Interest forwarding and Data return. Node \texttt{d}, which is connected only to \texttt{a}, retrieves data through its single 10\,ms link without possibly requiring any intermediate forwarding. This configuration ensures that every node in the network has a reachable route to the producer, allowing all consumers to successfully issue Interests and receive corresponding Data packets for a given \textit{@id}, thus validating correct NDN forwarding and content retrieval in the SeEDS prototype.
+
+
+\subsubsection{GET by TYPE}
 
 \subsection{Resilience (KPI 8)}
 \subsection{NDN-testbed (KPI 6)}
