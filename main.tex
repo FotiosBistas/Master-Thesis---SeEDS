@@ -5,6 +5,8 @@
 \usepackage{graphicx}
 \usepackage{float}
 \usepackage{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta}
 
 
 \colorlet{punct}{red!60!black}
@@ -41,6 +43,88 @@
       {]}{{{\color{delim}{]}}}}{1},
 }
 
+\lstdefinelanguage{log}{
+    basicstyle=\small\ttfamily,
+    numbers=left,
+    numberstyle=\scriptsize,
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=lines,
+    backgroundcolor=\color{background},
+    xleftmargin=1em,
+    columns=fullflexible,
+    morestring=[b]",
+    comment=[l]{//},
+    % Custom keyword and color definitions
+    morekeywords={info,debug,error,warn,warning},
+    keywordstyle=\color{blue!70!black}\bfseries,
+    alsoletter={[,],:},
+    literate=
+      {[info]}{{\textcolor{blue}{[info]}}}1
+      {[debug]}{{\textcolor{purple}{[debug]}}}1
+      {[error]}{{\textcolor{red}{[error]}}}1
+      {[warn]}{{\textcolor{orange!90!black}{[warn]}}}1
+      {[warning]}{{\textcolor{orange!90!black}{[warning]}}}1
+      {[Producer]}{{\textcolor{teal!70!black}{[Producer]}}}1
+      {[Consumer]}{{\textcolor{olive!70!black}{[Consumer]}}}1
+      {[Broker]}{{\textcolor{violet!70!black}{[Broker]}}}1
+      {[Worker]}{{\textcolor{magenta!70!black}{[Worker]}}}1
+      {[DigitalTwin]}{{\textcolor{cyan!70!black}{[DigitalTwin]}}}1
+      {[NDN]}{{\textcolor{brown!70!black}{[NDN]}}}1
+      {[HTTP]}{{\textcolor{gray!70!black}{[HTTP]}}}1
+} 
+
+\lstdefinelanguage{minindnconf}{
+    basicstyle=\small\ttfamily,
+    numbers=left,
+    numberstyle=\scriptsize,
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    frame=lines,
+    backgroundcolor=\color{background},
+    xleftmargin=1em,
+    columns=fullflexible,
+    sensitive=true,
+    % Comments (use # like many .conf files)
+    morecomment=[l]{\#},
+    commentstyle=\itshape\color{gray!70!black},
+    % Treat these as part of words so highlighting works
+    alsoletter={-:_[]},
+    % Section headers / keys
+    morekeywords={nodes,links,delay,nfd-log-level},
+    keywordstyle=\bfseries\color{delim},
+    % Common values
+    morekeywords=[2]{DEBUG,INFO,WARN,ERROR,TRACE},
+    keywordstyle=[2]\bfseries\color{purple!70!black},
+    % (Optional) common node ids if you want them tinted
+    morekeywords=[3]{a,b,c,d},
+    keywordstyle=[3]\bfseries\color{teal!70!black},
+    % Pretty-print punctuation and numbers/units
+    literate=
+      {=}{{\textcolor{punct}{=}}}{1}
+      {:}{{\textcolor{punct}{:}}}{1}
+      {[}{{\textcolor{delim}{[}}}{1}
+      {]}{{\textcolor{delim}{]}}}{1}
+      {_}{{\textcolor{gray!60!black}{\_}}}{1}
+      {,}{{\textcolor{punct}{,}}}{1}
+      % digits
+      {0}{{{\color{numb}0}}}{1}
+      {1}{{{\color{numb}1}}}{1}
+      {2}{{{\color{numb}2}}}{1}
+      {3}{{{\color{numb}3}}}{1}
+      {4}{{{\color{numb}4}}}{1}
+      {5}{{{\color{numb}5}}}{1}
+      {6}{{{\color{numb}6}}}{1}
+      {7}{{{\color{numb}7}}}{1}
+      {8}{{{\color{numb}8}}}{1}
+      {9}{{{\color{numb}9}}}{1}
+      % units
+      {ms}{{{\color{numb}ms}}}{2},
+}
 
 
 \begin{titlepage}
@@ -328,8 +412,110 @@ If the Secondary records consecutive failures in its liveness probes beyond a pr
     \label{fig:resilience}
 \end{figure}
 
-\section{Experiments}
+\section{Experiments and KPIs}
 
+\subsection{MiniNDN evalution}
+
+Mini-NDN is a lightweight emulation framework designed to facilitate experimentation with Named Data Networking (NDN) in a controlled, reproducible environment. It is built on top of \textit{Mininet}, a popular network emulator that allows users to create virtual network topologies composed of multiple nodes, links, and switches within a single physical or virtual machine. Mini-NDN extends this capability by integrating the NDN Forwarding Daemon (NFD) and NDN tools into each emulated node, effectively transforming the Mininet network into a fully functional NDN deployment.
+
+Each Mini-NDN node runs its own instance of NFD and can host NDN applications, such as producers and consumers, enabling realistic Interest/Data exchange over emulated network topologies. Mini-NDN supports custom configurations through topology and configuration files, making it straightforward to define arbitrary network graphs and specify per-node parameters such as faces, prefixes, and routing protocols.
+
+Mini-NDN was employed to test and validate the functionality of the SeEDS prototype prior to its deployment in the global NDN testbed, ensuring correct operation before deployment to the actual testbed. Below, for brevity's sake, we are going to present the basic \emph{GET by ID} and \emph{GET by TYPE} requests. Everything else has been tested to ensure its correct operation and can be found on the \href{https://github.com/mmlab-aueb/SeEDS/blob/main/README.md}{official github repository}( \textbf{KPI 9} ).
+
+
+\subsubsection{Topology}
+
+The Mini-NDN emulation was deployed using a simple four-node topology defined in the configuration file shown in Listing~\ref{lst:minindn_conf}. The nodes are labeled \texttt{a}, \texttt{b}, \texttt{c}, and \texttt{d}, each running its own instance of the NDN Forwarding Daemon (NFD) with the log level set to \texttt{DEBUG}.
+
+The connectivity between nodes is symmetric, with bidirectional links defined for each pair. Nodes \texttt{a}, \texttt{b}, and \texttt{c} form a triangular core interconnected with a delay of \texttt{10\,ms} per link, ensuring low-latency communication suitable for multi-hop experiments. Node \texttt{d} connects only to node \texttt{a}, also with a \texttt{10\,ms} delay, representing an edge node that communicates with the core through a single gateway.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node/.style={circle, draw, thick, minimum size=9mm, font=\sffamily\bfseries},
+    link/.style={-{Stealth[length=2mm]}-{Stealth[length=2mm]}, thick},
+    >=Stealth
+]
+% Nodes
+\node[node] (a) at (0,0) {a};
+\node[node] (b) at (4,0) {b};
+\node[node] (c) at (2,3) {c};
+\node[node] (d) at (-2,0) {d};
+
+% Core triangle links (bidirectional, 10 ms)
+\draw[link] (a) -- node[above left,pos=0.5]{\small 10\,ms} (c);
+\draw[link] (b) -- node[above right,pos=0.5]{\small 10\,ms} (c);
+\draw[link] (a) -- node[below,pos=0.5]{\small 10\,ms} (b);
+
+% Edge link for d (to a only)
+\draw[link] (d) -- node[below,pos=0.5]{\small 10\,ms} (a);
+
+
+\end{tikzpicture}
+\caption{Mini-NDN topology: triangular core (a–b–c) with 10\,ms links; edge node d connected to a.}
+\label{fig:minindn_topology}
+\end{figure}
+
+\begin{lstlisting}[language=minindnconf,caption={Mini-NDN topology .conf file},label={lst:minindn_conf}]
+[nodes]
+a: _ nfd-log-level=DEBUG
+b: _ nfd-log-level=DEBUG
+c: _ nfd-log-level=DEBUG
+d: _ nfd-log-level=DEBUG
+
+[links]
+a:b delay=10ms
+b:a delay=10ms
+b:c delay=10ms
+c:b delay=10ms
+c:a delay=10ms
+a:c delay=10ms
+d:a delay=10ms
+a:d delay=10ms
+\end{lstlisting}
+
+
+\pagebreak 
+
+\subsubsection{GET by ID}
+
+First we need to publish the \textit{@ids} in the NDN network: 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{images/publish_id_minindn.png}
+    \caption{Publish the @ids in the NDN network. Pay attention here that we publish \textit{@id=car22132113asfsdsad} (yes this was a sanity check) and \textit{@id=car2}. The output of the second \emph{CURL}, corresponds to the previous publish due to a design problem that needs to be addressed.}
+    \label{fig:publish_ids_minindn}
+\end{figure}
+
+
+Here are the logs of the Producer, receiving requests from the other Nodes that requested the \textit{@id}: 
+
+\begin{lstlisting}[language=log, caption={Producer Log File},label={lst:producer-log-file}]
+[2025-09-25 00:33:40.583] [info] [Producer] Received interest in function: onInterest, name: /SNDS/car1/temporalQuery%3Aid%3Dcar1%26type%3D%26date%3D%26count%3D%26timeframe%3D%26filters%3D
+[2025-09-25 00:33:40.583] [info] [Producer] Parsed interest: Prefix: SNDS, Name: car1, Command: temporalQuery, Params: [id=car1, type=, date=, count=, timeframe=, filters=]
+[2025-09-25 00:33:40.583] [debug] [Producer] Created interest response: /SNDS/car1/temporalQuery%3Aid%3Dcar1%26type%3D%26date%3D%26count%3D%26timeframe%3D%26filters%3D in: process_temporal_query_interest
+[2025-09-25 00:33:40.583] [debug] [Producer] TemporalQuery → id: car1, date: , type: , timeframe: , count: , filters: 
+[2025-09-25 00:33:40.583] [debug] [Producer] Requesting to endpoint: /temporal-query?id=car1&type=&count=&date=&timeframe=&filters=
+[2025-09-25 00:33:40.585] [info] [Producer] Successfully queried /temporal-query
+[2025-09-25 00:33:40.585] [debug] [Producer] Sending data to the NDN…
+[2025-09-25 00:35:26.584] [info] [Producer] Received interest in function: onInterest, name: /SNDS/SNDS_ID_scope_0/scopeNotification%3Acar2%26%26SNDS_ID_scope_2
+[2025-09-25 00:35:26.584] [info] [Producer] Parsed interest: Prefix: SNDS, Name: SNDS_ID_scope_0, Command: scopeNotification, Params: [car2, , SNDS_ID_scope_2]
+[2025-09-25 00:35:26.584] [info] [Producer] [BY_ID] Subscription notification for ID name car2 and/or TYPE: .
+[2025-09-25 00:35:26.584] [info] [Producer] No subscribers found for ID: car2 and/or TYPE: .
+[2025-09-25 00:35:26.584] [info] [Producer] Responding to interest: /SNDS/SNDS_ID_scope_0/scopeNotification%3Acar2%26%26SNDS_ID_scope_2
+[2025-09-25 00:35:26.584] [debug] [Producer] Sending data to the NDN…
+[2025-09-25 00:35:41.239] [info] [Producer] Received interest in function: onInterest, name: /SNDS/car3/temporalQuery%3Aid%3Dcar3%26type%3D%26date%3D%26count%3D%26timeframe%3D%26filters%3D
+[2025-09-25 00:35:41.239] [info] [Producer] Parsed interest: Prefix: SNDS, Name: car3, Command: temporalQuery, Params: [id=car3, type=, date=, count=, timeframe=, filters=]
+[2025-09-25 00:35:41.239] [debug] [Producer] Created interest response: /SNDS/car3/temporalQuery%3Aid%3Dcar3%26type%3D%26date%3D%26count%3D%26timeframe%3D%26filters%3D in: process_temporal_query_interest
+[2025-09-25 00:35:41.239] [debug] [Producer] TemporalQuery → id: car3, date: , type: , timeframe: , count: , filters: 
+[2025-09-25 00:35:41.239] [debug] [Producer] Requesting to endpoint: /temporal-query?id=car3&type=&count=&date=&timeframe=&filters=
+[2025-09-25 00:35:41.241] [info] [Producer] Successfully queried /temporal-query
+[2025-09-25 00:35:41.241] [debug] [Producer] Sending data to the NDN… 
+\end{lstlisting}
+
+\subsection{Resilience (KPI 8)}
+\subsection{NDN-testbed (KPI 6)}
 \section{Conclusion}
 
 \end{document}
