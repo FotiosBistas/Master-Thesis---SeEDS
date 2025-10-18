@@ -730,7 +730,7 @@ Here's a graph visualizing the topology:
 
 Here's the config file inserted in MiniNDN:
 
-\begin{lstlisting}[language=minindnconf]
+\begin{lstlisting}[language=minindnconf, caption={The MiniNDN config for creating a star topology},label={lst:minindnconf-star-topology}]
 [nodes]
 a: _ nfd-log-level=DEBUG
 b: _ nfd-log-level=DEBUG
@@ -769,6 +769,100 @@ Recovery was evaluated by analyzing the log files produced during the experiment
 \end{itemize}
 
 \subsubsection{Logs and Screenshots}
+
+Reminder that each node uses it's unique ID to make the following announcements:
+\begin{lstlisting}[language=log,caption={Local announcements for each Node},label={lst:announcements-for-each-node}]
+[2025-09-26 07:53:42.456] [info] [Producer] Announcing ID Scope name: SNDS/SNDS_ID_scope_id
+[2025-09-26 07:53:42.456] [info] [Producer] Announcing name: SNDS/is_alive_id
+[2025-09-26 07:53:42.456] [info] [Producer] Announcing name: SNDS/state_id
+[2025-09-26 07:53:42.457] [info] [Producer] Announcing name: /SNDS/CAR_id
+[2025-09-26 07:53:42.457] [info] [Producer] Announcing name: /SNDS/CAR_id_registry
+[2025-09-26 07:53:42.458] [info] [Producer] Successfully registered prefix: /SNDS_id  
+
+\end{lstlisting}
+
+ID is a placeholder for each node's unique ID. Then the python script is configured to publish data to the node's Type, Subscriber Registries and publish ID's locally. Inside node A:
+
+\begin{lstlisting}[language=log,caption={Configured publish operations for each Node},label={lst:local-publish-inside-a}]
+[2025-09-26 10:01:07.876] [info] [HTTPServer] Received POST request for / with body id=car0
+[2025-09-26 10:01:07.876] [info] [HTTPServer] Received POST request from 127.0.0.1
+Message: {id=car0}
+Type: BY_ID_ADVERTISEMENT
+Sender: HTTP_SRV
+Payload: 
+HTTP Type: HTTP_POST
+Params:
+id = car0
+[2025-09-26 10:01:07.876] [debug] [HTTPServer] Writing message from POST request to service queue...
+Message: {id=car0}
+Type: BY_ID_ADVERTISEMENT
+Sender: HTTP_SRV
+Payload: 
+HTTP Type: HTTP_POST
+Params:
+id = car0
+
+[2025-09-26 10:01:07.876] [debug] [DigitalTwin] Extracted content from message {id=car0}
+[2025-09-26 10:01:07.876] [debug] [DigitalTwin] Extracted content length from message 9
+[2025-09-26 10:01:07.876] [debug] [DigitalTwin] Extracted type from message: BY_ID_ADVERTISEMENT
+[2025-09-26 10:01:07.876] [info] [DigitalTwin] Received by ID get request...
+[2025-09-26 10:01:07.876] [debug] [DigitalTwin] Pushed ID car0 to the announced IDs vector...
+[2025-09-26 10:01:07.876] [debug] [DigitalTwin] Extracted id Scope from message SNDS_ID_scope_0
+Message: /SNDS/car0/postID:car0
+Type: BY_ID_ADVERTISEMENT
+Sender: DIGITAL_TWIN
+Payload: 
+HTTP Type: HTTP_EMPTY
+Params:
+[2025-09-26 10:01:07.876] [info] [DigitalTwin] Pushing byID advertisement to the Producer...
+Message: /SNDS/car0/postID:car0
+Type: BY_ID_ADVERTISEMENT
+Sender: DIGITAL_TWIN
+Payload: 
+HTTP Type: HTTP_EMPTY
+Params:
+
+[2025-09-26 10:01:07.876] [debug] [DigitalTwin] Sleeping 2000 ms before sending scope advertisement...
+[2025-09-26 10:01:07.880] [info] [Producer] Received interest in function: onInterest, name: /SNDS/state_0/getResilienceMeta%3A
+[2025-09-26 10:01:07.880] [info] [Producer] Parsed interest: Prefix: SNDS, Name: state_0, Command: getResilienceMeta, Params: []
+[2025-09-26 10:01:07.881] [info] [Producer] Received interest in function: onInterest, name: /SNDS/is_alive_0/getResilienceIsAlive%3A17432869098159683528
+[2025-09-26 10:01:07.882] [info] [Producer] Parsed interest: Prefix: SNDS, Name: is_alive_0, Command: getResilienceIsAlive, Params: [17432869098159683528]
+[2025-09-26 10:01:07.882] [debug] [Producer] Sending data to the NDN…
+[2025-09-26 10:01:07.902] [info] [Producer] Received interest in function: onInterest, name: /SNDS/is_alive_0/getResilienceIsAlive%3A11341762269107256235
+[2025-09-26 10:01:07.902] [info] [Producer] Parsed interest: Prefix: SNDS, Name: is_alive_0, Command: getResilienceIsAlive, Params: [11341762269107256235]
+[2025-09-26 10:01:07.902] [debug] [Producer] Sending data to the NDN…
+[2025-09-26 10:01:07.920] [info] [Producer] Received interest in function: onInterest, name: /SNDS/state_0/getResilienceMeta%3A
+[2025-09-26 10:01:07.920] [info] [Producer] Parsed interest: Prefix: SNDS, Name: state_0, Command: getResilienceMeta, Params: []
+[2025-09-26 10:01:07.922] [info] [Producer] Received interest in function: onInterest, name: /SNDS/is_alive_0/getResilienceIsAlive%3A7264770695334591861
+[2025-09-26 10:01:07.922] [info] [Producer] Parsed interest: Prefix: SNDS, Name: is_alive_0, Command: getResilienceIsAlive, Params: [7264770695334591861]
+[2025-09-26 10:01:07.922] [debug] [Producer] Sending data to the NDN…
+[2025-09-26 10:01:07.942] [info] [Producer] Received interest in function: onInterest, name: /SNDS/is_alive_0/getResilienceIsAlive%3A10537152589682238699
+[2025-09-26 10:01:07.942] [info] [Producer] Parsed interest: Prefix: SNDS, Name: is_alive_0, Command: getResilienceIsAlive, Params: [10537152589682238699]
+[2025-09-26 10:01:07.942] [debug] [Producer] Sending data to the NDN…
+[2025-09-26 10:01:07.960] [info] [Producer] Received interest in function: onInterest, name: /SNDS/state_0/getResilienceMeta%3A
+[2025-09-26 10:01:07.960] [info] [Producer] Parsed interest: Prefix: SNDS, Name: state_0, Command: getResilienceMeta, Params: []
+[2025-09-26 10:01:07.962] [info] [Producer] Received interest in function: onInterest, name: /SNDS/is_alive_0/getResilienceIsAlive%3A12718435922522655948
+[2025-09-26 10:01:07.962] [info] [Producer] Parsed interest: Prefix: SNDS, Name: is_alive_0, Command: getResilienceIsAlive, Params: [12718435922522655948]
+[2025-09-26 10:01:07.962] [debug] [Producer] Sending data to the NDN…
+Message: /SNDS/car0/postID:car0
+Type: BY_ID_ADVERTISEMENT
+Sender: DIGITAL_TWIN
+Payload: 
+HTTP Type: HTTP_EMPTY
+Params:
+[2025-09-26 10:01:07.971] [info] [Producer] Got new ID advertisement request...
+Message: /SNDS/car0/postID:car0
+Type: BY_ID_ADVERTISEMENT
+Sender: DIGITAL_TWIN
+Payload: 
+HTTP Type: HTTP_EMPTY
+Params:
+
+[2025-09-26 10:01:07.971] [debug] [Producer] Parsed interest Prefix: SNDS, Name: car0, Command: postID, Params: [car0] from string
+[2025-09-26 10:01:07.971] [info] [Producer] Announcing name: /SNDS/car0
+\end{lstlisting}
+
+We can see in the above that Node A successfully published \textit{@id=car0} to the NDN network.
 
 
 
