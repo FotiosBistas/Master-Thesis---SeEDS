@@ -710,6 +710,71 @@ The \textit{GET by TYPE} evaluation demonstrated the ability of SeEDS to retriev
 The experiment verified that when a consumer issues a \textit{GET by TYPE} request, the SeEDS Service translates it into an NDN Interest targeting the appropriate registry scope. Node~A, acting as the producer, responds with the set of matching entries, allowing the consumer, in this case D, to perform a \emph{GET by ID} for each \textit{@id} (entry).
 
 \subsection{Resilience (KPI 8)}
+
+The experimental evaluation was conducted using MiniNDN. The primary objective of this experiment was to measure system resilience under partial failure conditions, with the specific target of demonstrating that recovery latency does not fall below 200 ms when 50\% of the data intermediary nodes fail.
+
+The experimental evaluation was carried out on a seven-node star topology. In this configuration, node D functions as the central hub responsible for interconnecting all peripheral nodes through the Named Data Networking Forwarding Daemon (NFD). The peripheral nodes do not maintain direct links with one another; instead, every communication event must traverse the central hub. Consequently, all data exchanges and request forwarding operations are mediated by node D.
+
+The nodes that will fail here are A,B,C which will be the Primary Nodes and the nodes that will be set up to be Secondary and remain alive will be E,F,G
+
+\pagebreak
+
+Here's a graph visualizing the topology:
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.5\linewidth]{images/star_topology.png}
+    \caption{The above is a Star Topology with a central node ( hub ) interconnecting all the nodes in the network. The edge nodes in the circle F,E,C,G,B,A are the data nodes, responsible for publishing and getting data, while the hub acts just as an interconnector. The Primary Nodes A,B,C and the Secondary Nodes are E,F,G.}
+    \label{fig:star-topology}
+\end{figure}
+
+Here's the config file inserted in MiniNDN:
+
+\begin{lstlisting}[language=minindnconf]
+[nodes]
+a: _ nfd-log-level=DEBUG
+b: _ nfd-log-level=DEBUG
+c: _ nfd-log-level=DEBUG
+d: _ nfd-log-level=DEBUG
+e: _ nfd-log-level=DEBUG
+f: _ nfd-log-level=DEBUG
+g: _ nfd-log-level=DEBUG
+[links]
+d:a delay=10ms
+a:d delay=10ms
+d:b delay=10ms
+b:d delay=10ms
+c:d delay=10ms
+d:c delay=10ms
+d:e delay=10ms
+e:d delay=10ms
+d:f delay=10ms
+f:d delay=10ms
+d:g delay=10ms
+g:d delay=10ms 
+\end{lstlisting}
+
+To emulate node failures, we deliberately terminated half of the non-hub nodes during the experiment. This was achieved by applying a configurable timeout mechanism, after which the designated PRIMARY nodes were forced to stop their daemons and thus become unavailable. The remaining nodes (SECONDARY) continued to operate, monitoring their paired failing counterparts through the resilience poller.
+
+Prior to node failures, data was actively published into the NDN network by all participating nodes. Each node contributed multiple data objects (e.g., key-value pairs of IDs and associated types) into the system, ensuring that the global dataset was replicated across the distributed instances running locally on each host. The publication mechanism guaranteed redundancy, such that information was not confined to a single point of failure.
+
+Following the induced failures, retrieval operations were performed exclusively from the surviving SECONDARY nodes. By design, these nodes were configured to subscribe to content from their peers, ensuring that they could continue to respond to queries despite the absence of their PRIMARY counterparts. This allowed us to verify that replicated data remained accessible through alternative nodes.
+
+Recovery was evaluated by analyzing the log files produced during the experiment. Each node continuously recorded system events with millisecond granularity. The recovery time metric was defined as the difference between two logged timestamps:
+
+\begin{itemize}
+    \item The timestamp recorded at the moment a PRIMARY node was declared failed, which corresponds to the daemon termination triggered by the timeout mechanism.
+    \item The timestamp of the subsequent event when the paired SECONDARY node successfully published the final replicated data entry back into the NDN network.
+    \item This difference represents the effective duration required for the system to detect the failure, promote the SECONDARY, and ensure that data availability was restored.
+\end{itemize}
+
+\subsubsection{Logs and Screenshots}
+
+
+
+
+
+
 \subsection{NDN-testbed (KPI 6)}
 \section{Conclusion}
 
