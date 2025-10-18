@@ -771,7 +771,7 @@ Recovery was evaluated by analyzing the log files produced during the experiment
 \subsubsection{Logs and Screenshots}
 
 Reminder that each node uses it's unique ID to make the following announcements:
-\begin{lstlisting}[language=log,caption={Local announcements for each Node},label={lst:announcements-for-each-node}]
+\begin{lstlisting}[language=log,caption={Local announcements for each Node},label={lst:announcements-for-node-a}]
 [2025-09-26 07:53:42.456] [info] [Producer] Announcing ID Scope name: SNDS/SNDS_ID_scope_id
 [2025-09-26 07:53:42.456] [info] [Producer] Announcing name: SNDS/is_alive_id
 [2025-09-26 07:53:42.456] [info] [Producer] Announcing name: SNDS/state_id
@@ -781,9 +781,11 @@ Reminder that each node uses it's unique ID to make the following announcements:
 
 \end{lstlisting}
 
-ID is a placeholder for each node's unique ID. Then the python script is configured to publish data to the node's Type, Subscriber Registries and publish ID's locally. Inside node A:
+The \textit{ID} serves as a placeholder for each node’s unique identifier. The \emph{unique IDs} of each Node follow the alphabetical order and are zero-indexed. The Python script is configured to publish data to the node’s \textit{@type} and \textit{Subscriber} registries, as well as to publish the corresponding \textit{@ids} locally. This operation relies on each node’s \emph{unique node ID}. For instance, when publishing to node~A’s registry, which has a \emph{unique node ID} of~0, the data is published under the \textit{@type=CAR\_0} registry. Another example would be, that the \textit{@id=car0} should be published inside Node A or the \textit{@id=car1} should be published inside Node B. This procedure is repeated for all \emph{Nodes}, ensuring that each node maintains and announces its own unique data within the network. Recall that the \emph{Primary Nodes} are A,B,C so we should expect the \emph{Secondary Nodes} E,F,G to contain the data of the \emph{Primaries} once they fail.
 
-\begin{lstlisting}[language=log,caption={Configured publish operations for each Node},label={lst:local-publish-inside-a}]
+\textbf{Inside node A} we must see \textit{@id=car0} get announced successfully:
+
+\begin{lstlisting}[language=log,caption={Publish \textit{@id=car0}},label={lst:local-publish-inside-a}]
 [2025-09-26 10:01:07.876] [info] [HTTPServer] Received POST request for / with body id=car0
 [2025-09-26 10:01:07.876] [info] [HTTPServer] Received POST request from 127.0.0.1
 Message: {id=car0}
@@ -865,8 +867,68 @@ Params:
 We can see in the above that Node A successfully published \textit{@id=car0} to the NDN network.
 
 
+\textbf{Inside Node B} we should see \textit{@id=car1} get announced successfully: 
 
 
+\begin{lstlisting}[language=log, caption={}, label={lst:announcements-for-node-b}]
+[2025-09-26 10:01:19.920] [info] [HTTPServer] Received POST request for / with body id=car1
+[2025-09-26 10:01:19.920] [info] [HTTPServer] Received POST request from 127.0.0.1
+Message: {id=car1}
+Type: BY_ID_ADVERTISEMENT
+Sender: HTTP_SRV
+Payload: 
+HTTP Type: HTTP_POST
+Params:
+id = car1
+[2025-09-26 10:01:19.920] [debug] [HTTPServer] Writing message from POST request to service queue...
+Message: {id=car1}
+Type: BY_ID_ADVERTISEMENT
+Sender: HTTP_SRV
+Payload: 
+HTTP Type: HTTP_POST
+Params:
+id = car1
+
+[2025-09-26 10:01:19.920] [debug] [DigitalTwin] Extracted content from message {id=car1}
+[2025-09-26 10:01:19.920] [debug] [DigitalTwin] Extracted content length from message 9
+[2025-09-26 10:01:19.920] [debug] [DigitalTwin] Extracted type from message: BY_ID_ADVERTISEMENT
+[2025-09-26 10:01:19.920] [info] [DigitalTwin] Received by ID get request...
+[2025-09-26 10:01:19.920] [debug] [DigitalTwin] Pushed ID car1 to the announced IDs vector...
+[2025-09-26 10:01:19.920] [debug] [DigitalTwin] Extracted id Scope from message SNDS_ID_scope_5
+Message: /SNDS/car1/postID:car1
+Type: BY_ID_ADVERTISEMENT
+Sender: DIGITAL_TWIN
+Payload: 
+HTTP Type: HTTP_EMPTY
+Params:
+[2025-09-26 10:01:19.920] [info] [DigitalTwin] Pushing byID advertisement to the Producer...
+Message: /SNDS/car1/postID:car1
+Type: BY_ID_ADVERTISEMENT
+Sender: DIGITAL_TWIN
+Payload: 
+HTTP Type: HTTP_EMPTY
+Params:
+
+[2025-09-26 10:01:19.920] [debug] [DigitalTwin] Sleeping 2000 ms before sending scope advertisement...
+Message: /SNDS/car1/postID:car1
+Type: BY_ID_ADVERTISEMENT
+Sender: DIGITAL_TWIN
+Payload: 
+HTTP Type: HTTP_EMPTY
+Params:
+[2025-09-26 10:01:19.921] [info] [Producer] Got new ID advertisement request...
+Message: /SNDS/car1/postID:car1
+Type: BY_ID_ADVERTISEMENT
+Sender: DIGITAL_TWIN
+Payload: 
+HTTP Type: HTTP_EMPTY
+Params:
+
+[2025-09-26 10:01:19.921] [debug] [Producer] Parsed interest Prefix: SNDS, Name: car1, Command: postID, Params: [car1] from string
+[2025-09-26 10:01:19.921] [info] [Producer] Announcing name: /SNDS/car1
+\end{lstlisting}
+
+Now let's check whether the \emph{Secondary Nodes} can actually recover.
 
 
 \subsection{NDN-testbed (KPI 6)}
