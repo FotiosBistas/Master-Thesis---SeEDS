@@ -2657,6 +2657,849 @@ Let's check the SeEDS Service logs of the \emph{Producer}:
 [2025-10-01 13:41:27.559] [debug] [Producer] Sending data to the NDN…
 \end{lstlisting}
 
+Let's try a \emph{GET by TYPE} request from \emph{MMLab2}:
+
+\begin{lstlisting}[language=curl, caption={\emph{GET by TYPE} request for \textit{@type=CAR} registry from \emph{MMLab2}}, label={lst:get-by-type-registry-mmlab2}]
+scn4ndn@seeds7:~$ curl -i -X GET http://localhost:8080/?"type=CAR"
+HTTP/1.1 200 OK
+Keep-Alive: timeout=5, max=100
+Content-Length: 283
+Content-Type: text/plain
+
+{
+  "batch_size": 1,
+  "messages": [
+    {
+      "name": "/ndn/gr/edu/mmlab1/aueb/thomasi/CAR/scopeNotification:car003&CAR&SNDS_ID_scope_1",
+      "payload": {
+        "raw": "ACK_SUBSCRIPTION_NO_SUBSCRIBERS\n"
+      },
+      "sender": 6,
+      "type": "CONTROL_MESSAGE"
+    }
+  ]
+}
+\end{lstlisting}
+
+Let's check the logs of the Producer: 
+
+\begin{lstlisting}[language=log, caption={Producer logs after receiving a \emph{GET by TYPE} request from \emph{MMLab2}}, label={lst:producer-logs-get-by-type-from-mmlab2}]
+[2025-10-01 13:43:29.560] [info] [Producer] Received interest in function: onInterest, name: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR_registry/getByType%3ACAR
+[2025-10-01 13:43:29.560] [info] [Producer] Parsed interest: Prefix: ndn/gr/edu/mmlab1/aueb/thomasi, Name: CAR_registry, Command: getByType, Params: [CAR]
+[2025-10-01 13:43:29.560] [info] [Producer] Sending registry file payload for type CAR.
+[2025-10-01 13:43:29.560] [debug] [Producer] Sending data to the NDN…
+[2025-10-01 13:43:29.567] [info] [Producer] Received interest in function: onInterest, name: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar003%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D
+[2025-10-01 13:43:29.567] [info] [Producer] Parsed interest: Prefix: ndn/gr/edu/mmlab1/aueb/thomasi, Name: CAR, Command: temporalQuery, Params: [id=car003, type=CAR, date=, count=, timeframe=, filters=]
+[2025-10-01 13:43:29.567] [debug] [Producer] Created interest response: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar003%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D in: process_temporal_query_interest
+[2025-10-01 13:43:29.567] [debug] [Producer] TemporalQuery → id: car003, date: , type: CAR, timeframe: , count: , filters: 
+[2025-10-01 13:43:29.567] [debug] [Producer] Requesting to endpoint: /temporal-query?id=car003&type=CAR&count=&date=&timeframe=&filters=
+[2025-10-01 13:43:29.571] [info] [Producer] Successfully queried /temporal-query
+[2025-10-01 13:43:29.571] [debug] [Producer] Sending data to the NDN…
+[2025-10-01 13:43:29.579] [info] [Producer] Received interest in function: onInterest, name: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar002%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D
+[2025-10-01 13:43:29.579] [info] [Producer] Parsed interest: Prefix: ndn/gr/edu/mmlab1/aueb/thomasi, Name: CAR, Command: temporalQuery, Params: [id=car002, type=CAR, date=, count=, timeframe=, filters=]
+[2025-10-01 13:43:29.579] [debug] [Producer] Created interest response: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar002%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D in: process_temporal_query_interest
+[2025-10-01 13:43:29.579] [debug] [Producer] TemporalQuery → id: car002, date: , type: CAR, timeframe: , count: , filters: 
+[2025-10-01 13:43:29.579] [debug] [Producer] Requesting to endpoint: /temporal-query?id=car002&type=CAR&count=&date=&timeframe=&filters=
+[2025-10-01 13:43:29.580] [info] [Producer] Successfully queried /temporal-query
+[2025-10-01 13:43:29.580] [debug] [Producer] Sending data to the NDN…
+[2025-10-01 13:43:29.584] [info] [Producer] Received interest in function: onInterest, name: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar001%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D
+[2025-10-01 13:43:29.584] [info] [Producer] Parsed interest: Prefix: ndn/gr/edu/mmlab1/aueb/thomasi, Name: CAR, Command: temporalQuery, Params: [id=car001, type=CAR, date=, count=, timeframe=, filters=]
+[2025-10-01 13:43:29.584] [debug] [Producer] Created interest response: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar001%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D in: process_temporal_query_interest
+[2025-10-01 13:43:29.584] [debug] [Producer] TemporalQuery → id: car001, date: , type: CAR, timeframe: , count: , filters: 
+[2025-10-01 13:43:29.584] [debug] [Producer] Requesting to endpoint: /temporal-query?id=car001&type=CAR&count=&date=&timeframe=&filters=
+[2025-10-01 13:43:29.585] [info] [Producer] Successfully queried /temporal-query
+[2025-10-01 13:43:29.585] [debug] [Producer] Sending data to the NDN… 
+\end{lstlisting}
+
+Let's check the logs of the \emph{MMLab2}: 
+\begin{lstlisting}[language=log, caption={\emph{MMLab2} after receive a response for its \emph{GET by TYPE} request for \textit{@type=CAR}}, label={lst:response-from-get-by-type}]
+[2025-10-01 13:43:29.557] [info] [HTTPServer] Received GET request for / with target /?type=CAR
+[2025-10-01 13:43:29.557] [info] [HTTPServer] Received GET request from 127.0.0.1
+Message: {type=CAR}
+Type: GET_BY_TYPE_REQUEST
+Sender: HTTP_SRV
+Payload: 
+HTTP Type: HTTP_GET
+Params:
+type = CAR
+[2025-10-01 13:43:29.557] [debug] [HTTPServer] Writing message from GET request to service queue...
+Message: {type=CAR}
+Type: GET_BY_TYPE_REQUEST
+Sender: HTTP_SRV
+Payload: 
+HTTP Type: HTTP_GET
+Params:
+type = CAR
+
+[2025-10-01 13:43:29.557] [info] [Worker] Received content: {type=CAR}
+[2025-10-01 13:43:29.557] [info] [Worker] Received payload: 
+[2025-10-01 13:43:29.557] [info] [Worker] Received type: GET_BY_TYPE_REQUEST
+[2025-10-01 13:43:29.557] [debug] [Worker] Server intra message...
+[2025-10-01 13:43:29.557] [info] [Worker] Pushing getByType request for type: CAR_registry
+[2025-10-01 13:43:29.557] [debug] [Consumer] Extracted content from message: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR_registry/getByType:CAR
+[2025-10-01 13:43:29.557] [info] [Worker] Reading packet...
+[2025-10-01 13:43:29.557] [debug] [Consumer] Extracted content length from message: 58
+[2025-10-01 13:43:29.557] [debug] [Consumer] Extracted message type from message: GET_BY_TYPE_REQUEST
+[2025-10-01 13:43:29.557] [debug] [Consumer] Created name: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR_registry/getByType:CAR in func: express_get_by_type_interest
+[2025-10-01 13:43:29.557] [info] [Consumer] Sending actual Interest /ndn/gr/edu/mmlab1/aueb/thomasi/CAR_registry/getByType%3ACAR?CanBePrefix&MustBeFresh&Lifetime=200
+[2025-10-01 13:43:29.563] [info] [Consumer] Received Data with name: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR_registry/getByType%3ACAR in function onData
+[2025-10-01 13:43:29.563] [info] [Consumer] Data packet payload: Rcar003car002car001 in function onData
+[2025-10-01 13:43:29.563] [info] [Consumer] Parsed interest: Prefix: ndn/gr/edu/mmlab1/aueb/thomasi, Name: CAR_registry, Command: getByType, Params: [CAR] in onData
+[2025-10-01 13:43:29.563] [info] [Consumer] Received Registry File
+[2025-10-01 13:43:29.564] [info] [Consumer] In Function: onData sending name CAR to worker Rcar003car002car001
+[2025-10-01 13:43:29.564] [info] [Worker] Received content: CAR
+[2025-10-01 13:43:29.564] [info] [Worker] Received payload: Rcar003car002car001
+[2025-10-01 13:43:29.564] [info] [Worker] Received type: REGISTRY_PAYLOAD
+[2025-10-01 13:43:29.564] [info] [Consumer] Reading packet...
+[2025-10-01 13:43:29.564] [debug] [Worker] Consumer intra message...
+[2025-10-01 13:43:29.564] [debug] [Worker] Number of IDs in payload: 3
+[2025-10-01 13:43:29.564] [debug] [Worker] Reading ID #1 with size 6
+[2025-10-01 13:43:29.564] [info] [Worker] Parsed ID #1: car003
+[2025-10-01 13:43:29.564] [debug] [Worker] Reading ID #2 with size 6
+[2025-10-01 13:43:29.564] [info] [Worker] Parsed ID #2: car002
+[2025-10-01 13:43:29.564] [debug] [Worker] Reading ID #3 with size 6
+[2025-10-01 13:43:29.564] [info] [Worker] Parsed ID #3: car001
+[2025-10-01 13:43:29.564] [info] [Worker] Size of ids in registry file: 3
+[2025-10-01 13:43:29.564] [debug] [Worker] Processing registry id: car003
+[2025-10-01 13:43:29.564] [info] [Worker] Pushing request to the consumer for id car003
+[2025-10-01 13:43:29.564] [debug] [Worker] Processing registry id: car002
+[2025-10-01 13:43:29.564] [info] [Worker] Pushing request to the consumer for id car002
+[2025-10-01 13:43:29.564] [debug] [Consumer] Extracted content from message: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/getByIDForType:car003&CAR
+[2025-10-01 13:43:29.564] [debug] [Consumer] Extracted content length from message: 61
+[2025-10-01 13:43:29.564] [debug] [Consumer] Extracted message type from message: GET_BY_ID_FOR_TYPE_REQUEST
+[2025-10-01 13:43:29.564] [debug] [Consumer] Query.type: CAR
+[2025-10-01 13:43:29.564] [debug] [Consumer] Query.id: car003
+[2025-10-01 13:43:29.564] [info] [Consumer] Created name /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery:id%3Dcar003&type%3DCAR&date%3D&count%3D&timeframe%3D&filters%3D
+[2025-10-01 13:43:29.564] [info] [Consumer] Sending actual Interest /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar003%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D?CanBePrefix&MustBeFresh&Lifetime=200
+[2025-10-01 13:43:29.564] [debug] [Worker] Processing registry id: car001
+[2025-10-01 13:43:29.565] [info] [Worker] Pushing request to the consumer for id car001
+[2025-10-01 13:43:29.565] [info] [Worker] Reading packet...
+[2025-10-01 13:43:29.576] [info] [Consumer] Received Data with name: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar003%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D in function onData
+[2025-10-01 13:43:29.576] [info] [Consumer] Data packet payload: [
+  {
+    "": {
+      "_id": "car003",
+      "battery": 95,
+      "engine_temp": 79.4,
+      "id": "car003",
+      "speed": 55,
+      "timestamp": {
+        "$date": 1758793800000
+      },
+      "type": "CAR"
+    }
+  }
+] in function onData
+[2025-10-01 13:43:29.576] [info] [Consumer] Parsed interest: Prefix: ndn/gr/edu/mmlab1/aueb/thomasi, Name: CAR, Command: temporalQuery, Params: [id=car003, type=CAR, date=, count=, timeframe=, filters=] in onData
+[2025-10-01 13:43:29.576] [info] [Consumer] Temporal Query Reponse...
+[2025-10-01 13:43:29.576] [debug] [Consumer] Removed extra characters from payload (first 32 bytes hex): 5b 0a 20 20 7b 0a 20 20 20 20 22 22 3a 20 7b 0a 20 20 20 20 20 20 22 5f 69 64 22 3a 20 22 63 61 
+[2025-10-01 13:43:29.576] [debug] [Consumer] Candidate JSON slice:
+[
+  {
+    "": {
+      "_id": "car003",
+      "battery": 95,
+      "engine_temp": 79.4,
+      "id": "car003",
+      "speed": 55,
+      "timestamp": {
+        "$date": 1758793800000
+      },
+      "type": "CAR"
+    }
+  }
+]
+[2025-10-01 13:43:29.576] [debug] [Consumer] Sanitized payload to:
+[
+  {
+    "": {
+      "_id": "car003",
+      "battery": 95,
+      "engine_temp": 79.4,
+      "id": "car003",
+      "speed": 55,
+      "timestamp": {
+        "$date": 1758793800000
+      },
+      "type": "CAR"
+    }
+  }
+]
+[2025-10-01 13:43:29.576] [debug] [Consumer] Direct mode (single id in bucket).
+[2025-10-01 13:43:29.576] [debug] [Consumer] Got ID and type in direct: id=car003,type=CAR
+[2025-10-01 13:43:29.576] [info] [Worker] Received content: /?id=car003&type=CAR&date=&metafile=false&parentQueryHash=&lastInterest=true&mode=direct
+[2025-10-01 13:43:29.576] [info] [Worker] Received payload: [
+  {
+    "": {
+      "_id": "car003",
+      "battery": 95,
+      "engine_temp": 79.4,
+      "id": "car003",
+      "speed": 55,
+      "timestamp": {
+        "$date": 1758793800000
+      },
+      "type": "CAR"
+    }
+  }
+]
+[2025-10-01 13:43:29.577] [info] [Worker] Received type: VERSION_RESPONSE
+[2025-10-01 13:43:29.577] [debug] [Worker] Consumer intra message...
+[2025-10-01 13:43:29.577] [info] [Worker] Direct mode...
+[2025-10-01 13:43:29.577] [debug] [Worker] Cleared pending_get_by_id_requests for 'car003': erased=0
+[2025-10-01 13:43:29.577] [info] [Consumer] Reading packet...
+[2025-10-01 13:43:29.577] [debug] [Consumer] Extracted content from message: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/getByIDForType:car002&CAR
+[2025-10-01 13:43:29.577] [debug] [Worker] Cleared pending_get_by_type_requests for 'CAR': erased=1
+[2025-10-01 13:43:29.577] [debug] [Worker] Direct mode: no filters discovered; returning full item
+[2025-10-01 13:43:29.577] [info] [Worker] Reading packet...
+[2025-10-01 13:43:29.577] [debug] [Consumer] Extracted content length from message: 61
+[2025-10-01 13:43:29.577] [debug] [Consumer] Extracted message type from message: GET_BY_ID_FOR_TYPE_REQUEST
+Message: BATCH
+Type: GENERIC
+Sender: WORKER
+Payload: {
+  "batch_size": 1,
+  "messages": [
+    {
+      "name": "",
+      "payload": {
+        "items": [
+          {
+            "date": 1758793800000,
+            "id": "car003",
+            "type": "CAR"
+          }
+        ],
+        "mode": "direct"
+      },
+      "sender": 6,
+      "type": "TEMPORAL_QUERY_RESPONSE"
+    }
+  ]
+}
+
+HTTP Type: HTTP_EMPTY
+Params:
+[2025-10-01 13:43:29.577] [debug] [Consumer] Query.type: CAR
+[2025-10-01 13:43:29.577] [info] [HTTPServer] Read Message from queue:
+Message: BATCH
+Type: GENERIC
+Sender: WORKER
+Payload: {
+  "batch_size": 1,
+  "messages": [
+    {
+      "name": "",
+      "payload": {
+        "items": [
+          {
+            "date": 1758793800000,
+            "id": "car003",
+            "type": "CAR"
+          }
+        ],
+        "mode": "direct"
+      },
+      "sender": 6,
+      "type": "TEMPORAL_QUERY_RESPONSE"
+    }
+  ]
+}
+
+HTTP Type: HTTP_EMPTY
+Params:
+
+[2025-10-01 13:43:29.577] [debug] [Consumer] Query.id: car002
+[2025-10-01 13:43:29.577] [info] [Consumer] Created name /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery:id%3Dcar002&type%3DCAR&date%3D&count%3D&timeframe%3D&filters%3D
+[2025-10-01 13:43:29.577] [info] [Consumer] Sending actual Interest /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar002%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D?CanBePrefix&MustBeFresh&Lifetime=200
+[2025-10-01 13:43:29.583] [info] [Consumer] Received Data with name: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar002%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D in function onData
+[2025-10-01 13:43:29.583] [info] [Consumer] Data packet payload: [
+  {
+    "": {
+      "_id": "car002",
+      "battery": 78,
+      "engine_temp": 90.1,
+      "id": "car002",
+      "speed": 70,
+      "timestamp": {
+        "$date": 1758793200000
+      },
+      "type": "CAR"
+    }
+  }
+] in function onData
+[2025-10-01 13:43:29.583] [info] [Consumer] Parsed interest: Prefix: ndn/gr/edu/mmlab1/aueb/thomasi, Name: CAR, Command: temporalQuery, Params: [id=car002, type=CAR, date=, count=, timeframe=, filters=] in onData
+[2025-10-01 13:43:29.583] [info] [Consumer] Temporal Query Reponse...
+[2025-10-01 13:43:29.583] [debug] [Consumer] Removed extra characters from payload (first 32 bytes hex): 5b 0a 20 20 7b 0a 20 20 20 20 22 22 3a 20 7b 0a 20 20 20 20 20 20 22 5f 69 64 22 3a 20 22 63 61 
+[2025-10-01 13:43:29.583] [debug] [Consumer] Candidate JSON slice:
+[
+  {
+    "": {
+      "_id": "car002",
+      "battery": 78,
+      "engine_temp": 90.1,
+      "id": "car002",
+      "speed": 70,
+      "timestamp": {
+        "$date": 1758793200000
+      },
+      "type": "CAR"
+    }
+  }
+]
+[2025-10-01 13:43:29.583] [debug] [Consumer] Sanitized payload to:
+[
+  {
+    "": {
+      "_id": "car002",
+      "battery": 78,
+      "engine_temp": 90.1,
+      "id": "car002",
+      "speed": 70,
+      "timestamp": {
+        "$date": 1758793200000
+      },
+      "type": "CAR"
+    }
+  }
+]
+[2025-10-01 13:43:29.583] [debug] [Consumer] Direct mode (single id in bucket).
+[2025-10-01 13:43:29.583] [debug] [Consumer] Got ID and type in direct: id=car002,type=CAR
+[2025-10-01 13:43:29.583] [info] [Worker] Received content: /?id=car002&type=CAR&date=&metafile=false&parentQueryHash=&lastInterest=true&mode=direct
+[2025-10-01 13:43:29.583] [info] [Worker] Received payload: [
+  {
+    "": {
+      "_id": "car002",
+      "battery": 78,
+      "engine_temp": 90.1,
+      "id": "car002",
+      "speed": 70,
+      "timestamp": {
+        "$date": 1758793200000
+      },
+      "type": "CAR"
+    }
+  }
+]
+[2025-10-01 13:43:29.583] [info] [Worker] Received type: VERSION_RESPONSE
+[2025-10-01 13:43:29.583] [debug] [Worker] Consumer intra message...
+[2025-10-01 13:43:29.583] [info] [Worker] Direct mode...
+[2025-10-01 13:43:29.583] [info] [Consumer] Reading packet...
+[2025-10-01 13:43:29.583] [debug] [Consumer] Extracted content from message: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/getByIDForType:car001&CAR
+[2025-10-01 13:43:29.583] [debug] [Consumer] Extracted content length from message: 61
+[2025-10-01 13:43:29.583] [debug] [Consumer] Extracted message type from message: GET_BY_ID_FOR_TYPE_REQUEST
+[2025-10-01 13:43:29.583] [debug] [Consumer] Query.type: CAR
+[2025-10-01 13:43:29.583] [debug] [Worker] Cleared pending_get_by_id_requests for 'car002': erased=0
+[2025-10-01 13:43:29.583] [debug] [Worker] Cleared pending_get_by_type_requests for 'CAR': erased=0
+[2025-10-01 13:43:29.583] [debug] [Worker] Direct mode: no filters discovered; returning full item
+[2025-10-01 13:43:29.583] [info] [Worker] Reading packet...
+[2025-10-01 13:43:29.583] [debug] [Consumer] Query.id: car001
+[2025-10-01 13:43:29.583] [info] [Consumer] Created name /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery:id%3Dcar001&type%3DCAR&date%3D&count%3D&timeframe%3D&filters%3D
+[2025-10-01 13:43:29.583] [info] [Consumer] Sending actual Interest /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar001%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D?CanBePrefix&MustBeFresh&Lifetime=200
+[2025-10-01 13:43:29.587] [info] [Consumer] Received Data with name: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar001%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D in function onData
+[2025-10-01 13:43:29.587] [info] [Consumer] Data packet payload: [
+  {
+    "": {
+      "_id": "car001",
+      "battery": 87,
+      "engine_temp": 92.4,
+      "id": "car001",
+      "speed": 75,
+      "timestamp": {
+        "$date": 1758794400000
+      },
+      "type": "CAR"
+    }
+  }
+] in function onData
+[2025-10-01 13:43:29.588] [info] [Consumer] Parsed interest: Prefix: ndn/gr/edu/mmlab1/aueb/thomasi, Name: CAR, Command: temporalQuery, Params: [id=car001, type=CAR, date=, count=, timeframe=, filters=] in onData
+[2025-10-01 13:43:29.588] [info] [Consumer] Temporal Query Reponse...
+[2025-10-01 13:43:29.588] [debug] [Consumer] Removed extra characters from payload (first 32 bytes hex): 5b 0a 20 20 7b 0a 20 20 20 20 22 22 3a 20 7b 0a 20 20 20 20 20 20 22 5f 69 64 22 3a 20 22 63 61 
+[2025-10-01 13:43:29.588] [debug] [Consumer] Candidate JSON slice:
+[
+  {
+    "": {
+      "_id": "car001",
+      "battery": 87,
+      "engine_temp": 92.4,
+      "id": "car001",
+      "speed": 75,
+      "timestamp": {
+        "$date": 1758794400000
+      },
+      "type": "CAR"
+    }
+  }
+]
+[2025-10-01 13:43:29.588] [debug] [Consumer] Sanitized payload to:
+[
+  {
+    "": {
+      "_id": "car001",
+      "battery": 87,
+      "engine_temp": 92.4,
+      "id": "car001",
+      "speed": 75,
+      "timestamp": {
+        "$date": 1758794400000
+      },
+      "type": "CAR"
+    }
+  }
+]
+[2025-10-01 13:43:29.588] [debug] [Consumer] Direct mode (single id in bucket).
+[2025-10-01 13:43:29.588] [debug] [Consumer] Got ID and type in direct: id=car001,type=CAR
+[2025-10-01 13:43:29.588] [info] [Consumer] Reading packet...
+[2025-10-01 13:43:29.588] [info] [Worker] Received content: /?id=car001&type=CAR&date=&metafile=false&parentQueryHash=&lastInterest=true&mode=direct
+[2025-10-01 13:43:29.588] [info] [Worker] Received payload: [
+  {
+    "": {
+      "_id": "car001",
+      "battery": 87,
+      "engine_temp": 92.4,
+      "id": "car001",
+      "speed": 75,
+      "timestamp": {
+        "$date": 1758794400000
+      },
+      "type": "CAR"
+    }
+  }
+]
+[2025-10-01 13:43:29.588] [info] [Worker] Received type: VERSION_RESPONSE
+[2025-10-01 13:43:29.588] [debug] [Worker] Consumer intra message...
+[2025-10-01 13:43:29.588] [info] [Worker] Direct mode...
+[2025-10-01 13:43:29.588] [debug] [Worker] Cleared pending_get_by_id_requests for 'car001': erased=0
+[2025-10-01 13:43:29.588] [debug] [Worker] Cleared pending_get_by_type_requests for 'CAR': erased=0
+[2025-10-01 13:43:29.588] [debug] [Worker] Direct mode: no filters discovered; returning full item
+[2025-10-01 13:43:29.588] [info] [Worker] Reading packet...
+\end{lstlisting}
+
+Let's also do the same \emph{GET by TYPE} in the \emph{UMemphis} node: 
+
+\begin{lstlisting}[language=curl, caption={}, label={}]
+scn4ndn@seeds23:~$ curl -i -X GET http://localhost:8080/?"type=CAR"
+HTTP/1.1 200 OK
+Keep-Alive: timeout=5, max=100
+Content-Length: 328
+Content-Type: text/plain
+
+{
+  "batch_size": 1,
+  "messages": [
+    {
+      "name": "",
+      "payload": {
+        "items": [
+          {
+            "date": 1758793200000,
+            "id": "car002",
+            "type": "CAR"
+          }
+        ],
+        "mode": "direct"
+      },
+      "sender": 6,
+      "type": "TEMPORAL_QUERY_RESPONSE"
+    }
+  ]
+} 
+\end{lstlisting}
+
+Let's check the Producer Service logs, after receiving the \emph{GET by TYPE}: 
+
+\begin{lstlisting}[language=log, caption={Producer logs after receiving \emph{GET by TYPE} from the \emph{UMemphis} node.}, label={lst:after-receiving-get-by-type-umemphis}]
+[2025-10-01 13:45:36.170] [info] [Producer] Received interest in function: onInterest, name: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR_registry/getByType%3ACAR
+[2025-10-01 13:45:36.171] [info] [Producer] Parsed interest: Prefix: ndn/gr/edu/mmlab1/aueb/thomasi, Name: CAR_registry, Command: getByType, Params: [CAR]
+[2025-10-01 13:45:36.171] [info] [Producer] Sending registry file payload for type CAR.
+[2025-10-01 13:45:36.171] [debug] [Producer] Sending data to the NDN…
+[2025-10-01 13:45:36.499] [info] [Producer] Received interest in function: onInterest, name: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar003%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D
+[2025-10-01 13:45:36.499] [info] [Producer] Parsed interest: Prefix: ndn/gr/edu/mmlab1/aueb/thomasi, Name: CAR, Command: temporalQuery, Params: [id=car003, type=CAR, date=, count=, timeframe=, filters=]
+[2025-10-01 13:45:36.499] [debug] [Producer] Created interest response: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar003%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D in: process_temporal_query_interest
+[2025-10-01 13:45:36.499] [debug] [Producer] TemporalQuery → id: car003, date: , type: CAR, timeframe: , count: , filters: 
+[2025-10-01 13:45:36.499] [debug] [Producer] Requesting to endpoint: /temporal-query?id=car003&type=CAR&count=&date=&timeframe=&filters=
+[2025-10-01 13:45:36.503] [info] [Producer] Successfully queried /temporal-query
+[2025-10-01 13:45:36.503] [debug] [Producer] Sending data to the NDN…
+[2025-10-01 13:45:36.832] [info] [Producer] Received interest in function: onInterest, name: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar002%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D
+[2025-10-01 13:45:36.832] [info] [Producer] Parsed interest: Prefix: ndn/gr/edu/mmlab1/aueb/thomasi, Name: CAR, Command: temporalQuery, Params: [id=car002, type=CAR, date=, count=, timeframe=, filters=]
+[2025-10-01 13:45:36.832] [debug] [Producer] Created interest response: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar002%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D in: process_temporal_query_interest
+[2025-10-01 13:45:36.832] [debug] [Producer] TemporalQuery → id: car002, date: , type: CAR, timeframe: , count: , filters: 
+[2025-10-01 13:45:36.832] [debug] [Producer] Requesting to endpoint: /temporal-query?id=car002&type=CAR&count=&date=&timeframe=&filters=
+[2025-10-01 13:45:36.835] [info] [Producer] Successfully queried /temporal-query
+[2025-10-01 13:45:36.835] [debug] [Producer] Sending data to the NDN…
+[2025-10-01 13:45:37.168] [info] [Producer] Received interest in function: onInterest, name: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar001%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D
+[2025-10-01 13:45:37.168] [info] [Producer] Parsed interest: Prefix: ndn/gr/edu/mmlab1/aueb/thomasi, Name: CAR, Command: temporalQuery, Params: [id=car001, type=CAR, date=, count=, timeframe=, filters=]
+[2025-10-01 13:45:37.168] [debug] [Producer] Created interest response: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar001%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D in: process_temporal_query_interest
+[2025-10-01 13:45:37.168] [debug] [Producer] TemporalQuery → id: car001, date: , type: CAR, timeframe: , count: , filters: 
+[2025-10-01 13:45:37.168] [debug] [Producer] Requesting to endpoint: /temporal-query?id=car001&type=CAR&count=&date=&timeframe=&filters=
+[2025-10-01 13:45:37.171] [info] [Producer] Successfully queried /temporal-query
+[2025-10-01 13:45:37.171] [debug] [Producer] Sending data to the NDN…
+\end{lstlisting}
+
+Let's check the SeEDS Service logs of the \emph{UMemphis} node: 
+\begin{lstlisting}[language=log, caption={Logs of the SeEDS Service of the \emph{UMemphis} node, after getting a response from \emph{GET by TYPE}}, label={lst:get-by-type-umemphis}]
+[2025-10-01 13:45:36.006] [info] [HTTPServer] Received GET request for / with body 
+[2025-10-01 13:45:36.006] [info] [HTTPServer] Received GET request for / with target /?type=CAR
+[2025-10-01 13:45:36.006] [info] [HTTPServer] Received GET request from 127.0.0.1
+Message: {type=CAR}
+Type: GET_BY_TYPE_REQUEST
+Sender: HTTP_SRV
+Payload: 
+HTTP Type: HTTP_GET
+Params:
+type = CAR
+[2025-10-01 13:45:36.006] [debug] [HTTPServer] Writing message from GET request to service queue...
+Message: {type=CAR}
+Type: GET_BY_TYPE_REQUEST
+Sender: HTTP_SRV
+Payload: 
+HTTP Type: HTTP_GET
+Params:
+type = CAR
+
+[2025-10-01 13:45:36.006] [info] [Worker] Received content: {type=CAR}
+[2025-10-01 13:45:36.006] [info] [Worker] Received payload: 
+[2025-10-01 13:45:36.006] [info] [Worker] Received type: GET_BY_TYPE_REQUEST
+[2025-10-01 13:45:36.006] [debug] [Worker] Server intra message...
+[2025-10-01 13:45:36.006] [info] [Worker] Pushing getByType request for type: CAR_registry
+[2025-10-01 13:45:36.006] [info] [Worker] Reading packet...
+[2025-10-01 13:45:36.006] [debug] [Consumer] Extracted content from message: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR_registry/getByType:CAR
+[2025-10-01 13:45:36.006] [debug] [Consumer] Extracted content length from message: 58
+[2025-10-01 13:45:36.006] [debug] [Consumer] Extracted message type from message: GET_BY_TYPE_REQUEST
+[2025-10-01 13:45:36.006] [debug] [Consumer] Created name: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR_registry/getByType:CAR in func: express_get_by_type_interest
+[2025-10-01 13:45:36.006] [info] [Consumer] Sending actual Interest /ndn/gr/edu/mmlab1/aueb/thomasi/CAR_registry/getByType%3ACAR?CanBePrefix&MustBeFresh&Lifetime=6000
+[2025-10-01 13:45:36.336] [info] [Consumer] Received Data with name: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR_registry/getByType%3ACAR in function onData
+[2025-10-01 13:45:36.336] [info] [Consumer] Data packet payload: Rcar003car002car001 in function onData
+[2025-10-01 13:45:36.336] [info] [Consumer] Parsed interest: Prefix: ndn/gr/edu/mmlab1/aueb/thomasi, Name: CAR_registry, Command: getByType, Params: [CAR] in onData
+[2025-10-01 13:45:36.336] [info] [Consumer] Received Registry File
+[2025-10-01 13:45:36.336] [info] [Consumer] In Function: onData sending name CAR to worker Rcar003car002car001
+[2025-10-01 13:45:36.336] [info] [Consumer] Reading packet...
+[2025-10-01 13:45:36.336] [info] [Worker] Received content: CAR
+[2025-10-01 13:45:36.336] [info] [Worker] Received payload: Rcar003car002car001
+[2025-10-01 13:45:36.336] [info] [Worker] Received type: REGISTRY_PAYLOAD
+[2025-10-01 13:45:36.336] [debug] [Worker] Consumer intra message...
+[2025-10-01 13:45:36.336] [debug] [Worker] Number of IDs in payload: 3
+[2025-10-01 13:45:36.336] [debug] [Worker] Reading ID #1 with size 6
+[2025-10-01 13:45:36.336] [info] [Worker] Parsed ID #1: car003
+[2025-10-01 13:45:36.336] [debug] [Worker] Reading ID #2 with size 6
+[2025-10-01 13:45:36.336] [info] [Worker] Parsed ID #2: car002
+[2025-10-01 13:45:36.336] [debug] [Worker] Reading ID #3 with size 6
+[2025-10-01 13:45:36.336] [info] [Worker] Parsed ID #3: car001
+[2025-10-01 13:45:36.336] [info] [Worker] Size of ids in registry file: 3
+[2025-10-01 13:45:36.336] [debug] [Worker] Processing registry id: car003
+[2025-10-01 13:45:36.337] [info] [Worker] Pushing request to the consumer for id car003
+[2025-10-01 13:45:36.337] [debug] [Worker] Processing registry id: car002
+[2025-10-01 13:45:36.337] [info] [Worker] Pushing request to the consumer for id car002
+[2025-10-01 13:45:36.337] [debug] [Worker] Processing registry id: car001
+[2025-10-01 13:45:36.337] [info] [Worker] Pushing request to the consumer for id car001
+[2025-10-01 13:45:36.337] [info] [Worker] Reading packet...
+[2025-10-01 13:45:36.337] [debug] [Consumer] Extracted content from message: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/getByIDForType:car003&CAR
+[2025-10-01 13:45:36.337] [debug] [Consumer] Extracted content length from message: 61
+[2025-10-01 13:45:36.337] [debug] [Consumer] Extracted message type from message: GET_BY_ID_FOR_TYPE_REQUEST
+[2025-10-01 13:45:36.337] [debug] [Consumer] Query.type: CAR
+[2025-10-01 13:45:36.337] [debug] [Consumer] Query.id: car003
+[2025-10-01 13:45:36.337] [info] [Consumer] Created name /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery:id%3Dcar003&type%3DCAR&date%3D&count%3D&timeframe%3D&filters%3D
+[2025-10-01 13:45:36.337] [info] [Consumer] Sending actual Interest /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar003%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D?CanBePrefix&MustBeFresh&Lifetime=6000
+[2025-10-01 13:45:36.668] [info] [Consumer] Received Data with name: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar003%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D in function onData
+[2025-10-01 13:45:36.668] [info] [Consumer] Data packet payload: [
+  {
+    "": {
+      "_id": "car003",
+      "battery": 95,
+      "engine_temp": 79.4,
+      "id": "car003",
+      "speed": 55,
+      "timestamp": {
+        "$date": 1758793800000
+      },
+      "type": "CAR"
+    }
+  }
+] in function onData
+[2025-10-01 13:45:36.668] [info] [Consumer] Parsed interest: Prefix: ndn/gr/edu/mmlab1/aueb/thomasi, Name: CAR, Command: temporalQuery, Params: [id=car003, type=CAR, date=, count=, timeframe=, filters=] in onData
+[2025-10-01 13:45:36.668] [info] [Consumer] Temporal Query Reponse...
+[2025-10-01 13:45:36.669] [debug] [Consumer] Removed extra characters from payload (first 32 bytes hex): 5b 0a 20 20 7b 0a 20 20 20 20 22 22 3a 20 7b 0a 20 20 20 20 20 20 22 5f 69 64 22 3a 20 22 63 61 
+[2025-10-01 13:45:36.669] [debug] [Consumer] Candidate JSON slice:
+[
+  {
+    "": {
+      "_id": "car003",
+      "battery": 95,
+      "engine_temp": 79.4,
+      "id": "car003",
+      "speed": 55,
+      "timestamp": {
+        "$date": 1758793800000
+      },
+      "type": "CAR"
+    }
+  }
+]
+[2025-10-01 13:45:36.669] [debug] [Consumer] Sanitized payload to:
+[
+  {
+    "": {
+      "_id": "car003",
+      "battery": 95,
+      "engine_temp": 79.4,
+      "id": "car003",
+      "speed": 55,
+      "timestamp": {
+        "$date": 1758793800000
+      },
+      "type": "CAR"
+    }
+  }
+]
+[2025-10-01 13:45:36.669] [debug] [Consumer] Direct mode (single id in bucket).
+[2025-10-01 13:45:36.669] [debug] [Consumer] Got ID and type in direct: id=car003,type=CAR
+[2025-10-01 13:45:36.669] [info] [Consumer] Reading packet...
+[2025-10-01 13:45:36.669] [debug] [Consumer] Extracted content from message: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/getByIDForType:car002&CAR
+[2025-10-01 13:45:36.669] [debug] [Consumer] Extracted content length from message: 61
+[2025-10-01 13:45:36.669] [debug] [Consumer] Extracted message type from message: GET_BY_ID_FOR_TYPE_REQUEST
+[2025-10-01 13:45:36.669] [debug] [Consumer] Query.type: CAR
+[2025-10-01 13:45:36.669] [debug] [Consumer] Query.id: car002
+[2025-10-01 13:45:36.669] [info] [Consumer] Created name /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery:id%3Dcar002&type%3DCAR&date%3D&count%3D&timeframe%3D&filters%3D
+[2025-10-01 13:45:36.669] [info] [Consumer] Sending actual Interest /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar002%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D?CanBePrefix&MustBeFresh&Lifetime=6000
+[2025-10-01 13:45:36.669] [info] [Worker] Received content: /?id=car003&type=CAR&date=&metafile=false&parentQueryHash=&lastInterest=true&mode=direct
+[2025-10-01 13:45:36.669] [info] [Worker] Received payload: [
+  {
+    "": {
+      "_id": "car003",
+      "battery": 95,
+      "engine_temp": 79.4,
+      "id": "car003",
+      "speed": 55,
+      "timestamp": {
+        "$date": 1758793800000
+      },
+      "type": "CAR"
+    }
+  }
+]
+[2025-10-01 13:45:36.669] [info] [Worker] Received type: VERSION_RESPONSE
+[2025-10-01 13:45:36.669] [debug] [Worker] Consumer intra message...
+[2025-10-01 13:45:36.669] [info] [Worker] Direct mode...
+[2025-10-01 13:45:36.670] [debug] [Worker] Cleared pending_get_by_id_requests for 'car003': erased=0
+[2025-10-01 13:45:36.670] [debug] [Worker] Cleared pending_get_by_type_requests for 'CAR': erased=1
+[2025-10-01 13:45:36.670] [debug] [Worker] Direct mode: no filters discovered; returning full item
+[2025-10-01 13:45:36.670] [info] [Worker] Reading packet...
+Message: BATCH
+Type: GENERIC
+Sender: WORKER
+Payload: {
+  "batch_size": 1,
+  "messages": [
+    {
+      "name": "",
+      "payload": {
+        "items": [
+          {
+            "date": 1758793800000,
+            "id": "car003",
+            "type": "CAR"
+          }
+        ],
+        "mode": "direct"
+      },
+      "sender": 6,
+      "type": "TEMPORAL_QUERY_RESPONSE"
+    }
+  ]
+}
+
+HTTP Type: HTTP_EMPTY
+Params:
+[2025-10-01 13:45:36.671] [info] [HTTPServer] Read Message from queue:
+Message: BATCH
+Type: GENERIC
+Sender: WORKER
+Payload: {
+  "batch_size": 1,
+  "messages": [
+    {
+      "name": "",
+      "payload": {
+        "items": [
+          {
+            "date": 1758793800000,
+            "id": "car003",
+            "type": "CAR"
+          }
+        ],
+        "mode": "direct"
+      },
+      "sender": 6,
+      "type": "TEMPORAL_QUERY_RESPONSE"
+    }
+  ]
+}
+
+HTTP Type: HTTP_EMPTY
+Params:
+
+[2025-10-01 13:45:37.000] [info] [Consumer] Received Data with name: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar002%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D in function onData
+[2025-10-01 13:45:37.001] [info] [Consumer] Data packet payload: [
+  {
+    "": {
+      "_id": "car002",
+      "battery": 78,
+      "engine_temp": 90.1,
+      "id": "car002",
+      "speed": 70,
+      "timestamp": {
+        "$date": 1758793200000
+      },
+      "type": "CAR"
+    }
+  }
+] in function onData
+[2025-10-01 13:45:37.001] [info] [Consumer] Parsed interest: Prefix: ndn/gr/edu/mmlab1/aueb/thomasi, Name: CAR, Command: temporalQuery, Params: [id=car002, type=CAR, date=, count=, timeframe=, filters=] in onData
+[2025-10-01 13:45:37.001] [info] [Consumer] Temporal Query Reponse...
+[2025-10-01 13:45:37.001] [debug] [Consumer] Removed extra characters from payload (first 32 bytes hex): 5b 0a 20 20 7b 0a 20 20 20 20 22 22 3a 20 7b 0a 20 20 20 20 20 20 22 5f 69 64 22 3a 20 22 63 61 
+[2025-10-01 13:45:37.001] [debug] [Consumer] Candidate JSON slice:
+[
+  {
+    "": {
+      "_id": "car002",
+      "battery": 78,
+      "engine_temp": 90.1,
+      "id": "car002",
+      "speed": 70,
+      "timestamp": {
+        "$date": 1758793200000
+      },
+      "type": "CAR"
+    }
+  }
+]
+[2025-10-01 13:45:37.002] [debug] [Consumer] Sanitized payload to:
+[
+  {
+    "": {
+      "_id": "car002",
+      "battery": 78,
+      "engine_temp": 90.1,
+      "id": "car002",
+      "speed": 70,
+      "timestamp": {
+        "$date": 1758793200000
+      },
+      "type": "CAR"
+    }
+  }
+]
+[2025-10-01 13:45:37.002] [debug] [Consumer] Direct mode (single id in bucket).
+[2025-10-01 13:45:37.002] [debug] [Consumer] Got ID and type in direct: id=car002,type=CAR
+[2025-10-01 13:45:37.002] [info] [Worker] Received content: /?id=car002&type=CAR&date=&metafile=false&parentQueryHash=&lastInterest=true&mode=direct
+[2025-10-01 13:45:37.004] [info] [Worker] Received payload: [
+  {
+    "": {
+      "_id": "car002",
+      "battery": 78,
+      "engine_temp": 90.1,
+      "id": "car002",
+      "speed": 70,
+      "timestamp": {
+        "$date": 1758793200000
+      },
+      "type": "CAR"
+    }
+  }
+]
+[2025-10-01 13:45:37.005] [info] [Worker] Received type: VERSION_RESPONSE
+[2025-10-01 13:45:37.005] [debug] [Worker] Consumer intra message...
+[2025-10-01 13:45:37.005] [info] [Worker] Direct mode...
+[2025-10-01 13:45:37.002] [info] [Consumer] Reading packet...
+[2025-10-01 13:45:37.005] [debug] [Worker] Cleared pending_get_by_id_requests for 'car002': erased=0
+[2025-10-01 13:45:37.005] [debug] [Consumer] Extracted content from message: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/getByIDForType:car001&CAR
+[2025-10-01 13:45:37.005] [debug] [Consumer] Extracted content length from message: 61
+[2025-10-01 13:45:37.005] [debug] [Consumer] Extracted message type from message: GET_BY_ID_FOR_TYPE_REQUEST
+[2025-10-01 13:45:37.005] [debug] [Consumer] Query.type: CAR
+[2025-10-01 13:45:37.005] [debug] [Consumer] Query.id: car001
+[2025-10-01 13:45:37.005] [debug] [Worker] Cleared pending_get_by_type_requests for 'CAR': erased=0
+[2025-10-01 13:45:37.005] [debug] [Worker] Direct mode: no filters discovered; returning full item
+[2025-10-01 13:45:37.005] [info] [Consumer] Created name /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery:id%3Dcar001&type%3DCAR&date%3D&count%3D&timeframe%3D&filters%3D
+[2025-10-01 13:45:37.006] [info] [Worker] Reading packet...
+[2025-10-01 13:45:37.006] [info] [Consumer] Sending actual Interest /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar001%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D?CanBePrefix&MustBeFresh&Lifetime=6000
+[2025-10-01 13:45:37.336] [info] [Consumer] Received Data with name: /ndn/gr/edu/mmlab1/aueb/thomasi/CAR/temporalQuery%3Aid%3Dcar001%26type%3DCAR%26date%3D%26count%3D%26timeframe%3D%26filters%3D in function onData
+[2025-10-01 13:45:37.336] [info] [Consumer] Data packet payload: [
+  {
+    "": {
+      "_id": "car001",
+      "battery": 87,
+      "engine_temp": 92.4,
+      "id": "car001",
+      "speed": 75,
+      "timestamp": {
+        "$date": 1758794400000
+      },
+      "type": "CAR"
+    }
+  }
+] in function onData
+[2025-10-01 13:45:37.336] [info] [Consumer] Parsed interest: Prefix: ndn/gr/edu/mmlab1/aueb/thomasi, Name: CAR, Command: temporalQuery, Params: [id=car001, type=CAR, date=, count=, timeframe=, filters=] in onData
+[2025-10-01 13:45:37.336] [info] [Consumer] Temporal Query Reponse...
+[2025-10-01 13:45:37.336] [debug] [Consumer] Removed extra characters from payload (first 32 bytes hex): 5b 0a 20 20 7b 0a 20 20 20 20 22 22 3a 20 7b 0a 20 20 20 20 20 20 22 5f 69 64 22 3a 20 22 63 61 
+[2025-10-01 13:45:37.336] [debug] [Consumer] Candidate JSON slice:
+[
+  {
+    "": {
+      "_id": "car001",
+      "battery": 87,
+      "engine_temp": 92.4,
+      "id": "car001",
+      "speed": 75,
+      "timestamp": {
+        "$date": 1758794400000
+      },
+      "type": "CAR"
+    }
+  }
+]
+[2025-10-01 13:45:37.336] [debug] [Consumer] Sanitized payload to:
+[
+  {
+    "": {
+      "_id": "car001",
+      "battery": 87,
+      "engine_temp": 92.4,
+      "id": "car001",
+      "speed": 75,
+      "timestamp": {
+        "$date": 1758794400000
+      },
+      "type": "CAR"
+    }
+  }
+]
+[2025-10-01 13:45:37.337] [debug] [Consumer] Direct mode (single id in bucket).
+[2025-10-01 13:45:37.337] [debug] [Consumer] Got ID and type in direct: id=car001,type=CAR
+[2025-10-01 13:45:37.337] [info] [Consumer] Reading packet...
+[2025-10-01 13:45:37.337] [info] [Worker] Received content: /?id=car001&type=CAR&date=&metafile=false&parentQueryHash=&lastInterest=true&mode=direct
+[2025-10-01 13:45:37.337] [info] [Worker] Received payload: [
+  {
+    "": {
+      "_id": "car001",
+      "battery": 87,
+      "engine_temp": 92.4,
+      "id": "car001",
+      "speed": 75,
+      "timestamp": {
+        "$date": 1758794400000
+      },
+      "type": "CAR"
+    }
+  }
+]
+[2025-10-01 13:45:37.337] [info] [Worker] Received type: VERSION_RESPONSE
+[2025-10-01 13:45:37.337] [debug] [Worker] Consumer intra message...
+[2025-10-01 13:45:37.337] [info] [Worker] Direct mode...
+[2025-10-01 13:45:37.337] [debug] [Worker] Cleared pending_get_by_id_requests for 'car001': erased=0
+[2025-10-01 13:45:37.337] [debug] [Worker] Cleared pending_get_by_type_requests for 'CAR': erased=0
+[2025-10-01 13:45:37.337] [debug] [Worker] Direct mode: no filters discovered; returning full item
+[2025-10-01 13:45:37.337] [info] [Worker] Reading packet...
+\end{lstlisting}
 \section{Conclusion}
 
 \end{document}
