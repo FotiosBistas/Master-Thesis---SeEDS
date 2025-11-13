@@ -201,7 +201,10 @@
    \end{center}
 \end{titlepage}
 
+
 \begin{document}
+
+\tableofcontents
 
 \section{Introduction}
 
@@ -349,6 +352,11 @@ The resilience system is designed to handle failures gracefully. If the poller r
 
 The implementation described in this section reflects the state of the SeEDS system as of October 2025. As the project continues to evolve, certain design choices, component interfaces, or architectural details may change to accommodate new requirements, optimizations, or future redesigns. Therefore, this documentation should be considered a snapshot of the current implementation rather than a definitive or final version.
 
+For each request type, a dedicated \textit{“Under the Hood”} subsection is provided to illustrate the internal operations that occur within the codebase—for example covering message parsing, data publication, registry updates, and communication between components. Each request type is going to be presented first from a functional perspective (which is less likey to change in the future) , followed by a detailed explanation of its internal execution flow (which is much more likely to change).
+
+Note that some core functionalities of the SeEDS system, including \textit{Announce Content}, \textit{GET by ID}, \textit{GET by TYPE}, and \textit{SUBSCRIBE by ID}, had already been implemented in earlier iterations of the codebase. However, these implementations were originally developed in a tightly coupled and less modular manner, which made the internal logic difficult to follow and maintain. As part of this work, these components were carefully refactored to improve readability, modularity, and overall coherence. 
+
+
 
 \subsection{Announcing Content}
 
@@ -362,6 +370,7 @@ When a node intends to announce content within the NDN network, it does so by ad
 \end{figure}
 
 Following the initial announcements, a new client intends to provide an entity with \textit{@id = car1} of type \textit{@type = CAR}. When this new \textit{@id} arrives, the receiving SeEDS Service first announces it locally, as illustrated in message~\emph{(5)}. It must then \emph{express an Interest}, as shown in message~\emph{(6)}, for the \textit{@type = CAR} registry so that the responsible node can store the new entry in the registry. The responsible node replies with an \emph{ACK} message, confirming that \textit{@id = car1} has been successfully registered under \textit{@type = CAR}. If the client’s \emph{HTTP request} does not explicitly specify a \textit{@type}, the system omits messages~\emph{(6)} and~\emph{(7)} and only announces the \textit{@id = car1} within the network.
+
 
 \subsection{GET by ID}\label{get_by_id_section}
 
@@ -457,6 +466,68 @@ If the Secondary records consecutive failures in its liveness probes beyond a pr
     \caption{Resilience message exchange in SeEDS.}
     \label{fig:resilience}
 \end{figure}
+
+\subsection{Under the Hood}
+
+\subsubsection{General Implementation Details}
+
+The system contains 5 different essential components each performing its own functionality along with custom made libraries that achieve specific goals. The components are the following: 
+
+\begin{enumerate}
+    \item \textit{snds\_http\_server.cpp}: This provides the HTTP interface for sending and receiving SNDS messages using \texttt{cpp-httplib}. It converts incoming HTTP requests into internal SNDS messages and returns the corresponding responses over HTTP. The service parses query and body parameters using the \texttt{QUERY\_PARAM\_LIST} macros, determines the request type (e.g., \textit{GET\_BY\_ID}, \textit{TEMPORAL\_QUERY}) based on the HTTP verb and parameters, sends the resulting message to the appropriate service queue, and finally waits for the response to return its payload as the HTTP reply. The implementation is available in the SeEDS repository:
+\href{https://github.com/mmlab-aueb/SeEDS/blob/main/src/snds_service/snds_http_server.hpp}{\texttt{snds\_http\_server.hpp}} and
+\href{https://github.com/mmlab-aueb/SeEDS/blob/main/src/snds_service/snds_http_server.cpp}{\texttt{snds\_http\_server.cpp}}.
+    \item \textit{snds\_worker.cpp}: The \texttt{Worker} module is the central coordinator within the SeEDS system, after receiving \textit{GET requests}. It orchestrates the internal request and response workflows for subscriptions, lookups, and temporal queries. Specifically, it receives intra-messages from multiple components (such as the HTTP server, consumers, and producers), maintains lightweight in-flight state for operations like deduplication, correlation, and aggregation, and emits follow-up Interests or terminal responses depending on the processing outcome.
+    Implementation details can be found in \href{https://github.com/mmlab-aueb/SeEDS/blob/main/src/snds_service/snds_worker.hpp}{\texttt{snds\_worker.hpp}} and \href{https://github.com/mmlab-aueb/SeEDS/blob/main/src/snds_service/snds_worker.cpp}{\texttt{snds\_worker.cpp}}.
+    \item \textit{snds\_digital\_twin.cpp}: The \texttt{DigitalTwin} service is responsible for advertising identifiers, types, and temporal queries within the SeEDS system. It listens for intra-service messages such as \textit{BY\_ID\_ADVERTISEMENT} and \textit{TEMPORAL\_QUERY\_ADVERTISEMENT}, and generates the corresponding NDN Interests through helper utilities that construct the appropriate Interest names. Additionally, it maintains a record of locally announced IDs to prevent duplicate advertisements on the SNDS bus. Implementation details are available in \href{https://github.com/mmlab-aueb/SeEDS/blob/main/src/snds_service/snds_digital_twin.hpp}{\texttt{snds\_digital\_twin.hpp}} and \href{https://github.com/mmlab-aueb/SeEDS/blob/main/src/snds_service/snds_digital_twin.cpp}{\texttt{snds\_digital\_twin.cpp}}.
+    \item \textit{snds\_consumer.cpp}: The \texttt{SNDSConsumer} is the consumer-side service responsible for translating intra-service messages, received from the \textit{Worker} and \textit{Digital Twin}, into NDN Interests and forwarding the received Data back into the intra-service bus. It listens for SNDS intra-messages—such as those derived from \textit{GET}/\textit{POST} requests, subscription events, or temporal queries—then converts them into NDN Interests using the parsed-interest utilities. Upon receiving Data from the NDN network, the consumer publishes the results back into the worker queue as SNDS intra-messages. Implementation details are available in \href{https://github.com/mmlab-aueb/SeEDS/blob/main/src/snds_service/snds_consumer.hpp}{\texttt{snds\_consumer.hpp}} and \href{https://github.com/mmlab-aueb/SeEDS/blob/main/src/snds_service/snds_consumer.cpp}{\texttt{snds\_consumer.cpp}}.
+    \item \textit{snds\_producer.cpp}: The \texttt{SNDSProducer} acts as the NDN producer within the SeEDS system, responsible for advertising names, serving Interests, and maintaining a resilient, versioned in-memory registry which is essentially the implementation of the versioning scheme in resilience. It registers Interest for IDs, types, and state information, parses incoming Interests to determine the corresponding handler to process the interests. It also maintains registries for type–ID mappings and active subscriptions. The producer stores and proxies data retrieval to an HTTP broker, handle queries such as \textit{GET}, \textit{temporal-query}, or \textit{state}, and maintain a bounded journal for rehydration or failover recovery. When resilience mode is enabled, it operates an IPC server that manages synchronization, snapshots, and role transitions between \textit{PRIMARY} and \textit{SECONDARY} states, whici is part of the resilience mentioned before. Implementation details are available 
+    \break in \href{https://github.com/mmlab-aueb/SeEDS/blob/main/src/snds_service/snds_producer.hpp}{\texttt{snds\_producer.hpp}} and \href{https://github.com/mmlab-aueb/SeEDS/blob/main/src/snds_service/snds_producer.cpp}{\texttt{snds\_producer.cpp}}.
+
+
+\end{enumerate}
+
+The framework contains 8 libraries that assist with different types of functionality.
+
+\begin{enumerate}
+    \item \textit{snds\_interest}: The \texttt{snds\_interest} library provides utilities for modeling and parsing SNDS-style NDN Interest names. It defines a taxonomy of Interest ``command'' components (e.g., \textit{temporalQuery}, \textit{version}, \textit{getByType}) via the \texttt{INTEREST\_MESSAGE\_TYPE} X-macro list and its corresponding enum and string table. The core value type, \texttt{ParsedInterestName}, represents a decomposed Interest name with explicit fields for the prefix, logical name, command, and parameter list. The final Interest that is created through this library looks like this \texttt{prefix/name/command:param1\&param2\&}. The library includes helpers for URL encoding/decoding, splitting and normalizing \texttt{key=value} parameters, converting an \texttt{ndn::Name} into a \texttt{ParsedInterestName}, and reconstructing custom NDN names or HTTP-style query strings from the parsed structure. Together, these utilities ensure that all SeEDS components interpret and construct Interest names in a consistent, testable way. Implementation details are available in \href{https://github.com/mmlab-aueb/SeEDS/blob/main/src/snds_interest/parsed_interest_name.hpp}{\texttt{parsed\_interest\_name.hpp}} and \href{https://github.com/mmlab-aueb/SeEDS/blob/main/src/snds_interest/parsed_interest_name.cpp}{\texttt{parsed\_interest\_name.cpp}}.
+    
+    In addition, the header \textit{parsed\_interest\_to\_temporal\_query.hpp} provides a mapping layer that converts a \texttt{ParsedInterestName} into a \texttt{temporal\_query::TemporalQuery} object. It interprets each parameter token as a \texttt{"key=value"} pair, decoding percent-escapes and populating the temporal query fields such as \textit{id}, \textit{type}, \textit{date}, \textit{timeframe}, \textit{count}, and \textit{filters}, while preserving unknown keys in an \texttt{extras} map for forward compatibility. This enables a direct, convention-based translation from NDN Interest naming to the temporal-query semantics used by the Broker and Producer. The implementation is available in \href{https://github.com/mmlab-aueb/SeEDS/blob/main/src/snds_interest/parsed_interest_to_temporal_query.hpp}{\texttt{parsed\_interest\_to\_temporal\_query.hpp}}.
+
+    \item \textit{snds\_inter\_process\_communication}: The \texttt{snds\_inter\_process\_communication} library provides low-level utilities for TCP-based inter-process communication used by the SeEDS resilience subsystem. It offers helper functions for encoding and decoding 32-bit integers in big-endian format, which are used to frame messages with a fixed-length header. In addition, it provides a templated \texttt{send\_json} routine that serializes \texttt{nlohmann::json} objects, prefixes them with a 4-byte length field, and transmits the resulting frame over any synchronous Boost.Asio stream (such as a TCP socket). This library forms the basis of the lightweight IPC protocol used for exchanging snapshots, patches, and control messages between PRIMARY and SECONDARY roles. The implementation is available in \href{https://github.com/mmlab-aueb/SeEDS/blob/main/src/snds_ipc/snds_ipc_tcp.hpp}{\texttt{snds\_ipc\_tcp.hpp}}.
+    \item \textit{snds\_broker}: The \texttt{Broker} is a lightweight HTTP server backed by MongoDB that provides persistent storage and index-based retrieval for the SeEDS system. It accepts JSON payloads through the \textit{/add} endpoint and writes them to both versioned and unversioned collections, enabling temporal querying and state reconstruction. It exposes several read interfaces, including \textit{/get} for latest-value retrieval, \textit{/temporal-query} for time-sliced historical reads, and \textit{/state} for computing per-collection fingerprints. The broker also offers dump and restore functionality via \textit{/dump} and \textit{/copy}, and supports mirroring data into secondary collections for use in the resilience subsystem. Low-level utilities for timestamp parsing, canonical JSON normalization and hashing, aggregation pipeline construction, and collection dumping are factored out into \textit{broker\_utils.cpp}. Together, these files implement the authoritative persistence layer of SeEDS, enabling versioning, replay, and consistent state recovery across system restarts or failover events. Implementation details are available in \href{https://github.com/mmlab-aueb/SeEDS/blob/main/src/broker/broker.hpp}{\texttt{broker.hpp}}, \href{https://github.com/mmlab-aueb/SeEDS/blob/main/src/broker/broker.cpp}{\texttt{broker.cpp}}, and \href{https://github.com/mmlab-aueb/SeEDS/blob/main/src/broker/broker_utils.cpp}{\texttt{broker\_utils.cpp}}.
+    \item \textit{snds\_query\_params}: The \texttt{snds\_query\_params} library provides a small set of helpers and X-macros for declaring, extracting, and applying HTTP query parameters in a consistent way across the SeEDS codebase. It defines canonical string constants for all supported query keys (such as \textit{id}, \textit{type}, \textit{date}, \textit{timeframe}, \textit{count}, \textit{filters}, and subscription-related flags), together with a traits-like \texttt{QueryParam<T>} extractor specialized for \texttt{std::string} and \texttt{bool}. The central X-macro list \texttt{QUERY\_PARAM\_LIST} acts as the single source of truth for all parameters, specifying their local variable name, wire key, whether they should be URL-decoded, and their C++ type. On top of this list, the header builds convenience macros to declare a full set of \texttt{std::optional<\dots>} variables, extract their values from an \texttt{httplib::Request}, and apply the present parameters to higher-level message objects (such as \texttt{SNDS\_INTRA\_MESSAGE}) via generated \texttt{set\_<param>\_} setters. This design keeps parameter handling centralized and avoids duplication of parsing logic in individual services. Implementation details are available in \href{https://github.com/mmlab-aueb/SeEDS/blob/main/src/snds_query_params/query_params.hpp}{\texttt{query\_params.hpp}}.
+    \item \textit{snds\_message}: The \texttt{snds\_intra\_message} library defines the intra-service message taxonomy and the lightweight container used to exchange messages between the SeEDS components mentioned in the above list. It uses X-macros to specify all intra-message kinds, HTTP verbs, control/ACK types, and client roles in a single place, automatically generating the corresponding enums and string tables, along with generic \texttt{to\_string} and \texttt{from\_string} helpers. The core value type, \texttt{SNDS\_INTRA\_MESSAGE}, encapsulates the primary message body, an optional payload, the message type, sender role, HTTP method, and a set of strongly-typed optional parameters generated from \texttt{QUERY\_PARAM\_LIST}. It provides utilities to infer the message type from the HTTP verb and the presence of specific parameters (e.g., distinguishing \textit{GET\_BY\_ID\_REQUEST}, \textit{BY\_TYPE\_SUBSCRIPTION}, or \textit{TEMPORAL\_QUERY\_REQUEST}), as well as to pack and unpack parameters into a compact human-readable \texttt{\{"k=v,k2=v2"\}} representation and to pretty-print messages for debugging. This library serves as the single source of truth for intra-message (between snds\_components) semantics across the SeEDS codebase. Implementation details are available in \href{https://github.com/mmlab-aueb/SeEDS/blob/main/src/snds_message/snds_message.hpp}{\texttt{snds\_message.hpp}}.
+    \item \textit{snds\_queue}:  
+    The \texttt{snds\_queue} library provides the SeEDS Service with a thread-safe, producer–consumer message buffer used internally for inter-thread coordination and batching of \texttt{SNDS\_INTRA\_MESSAGE} objects. It wraps a \texttt{std::deque} protected by a mutex and condition variable, allowing writers to enqueue messages asynchronously while readers block until data becomes available. A shutdown flag is exposed so that worker threads can safely terminate even when no further messages are pending. Beyond the basic \texttt{readMessage()} and \texttt{writeMessage()} operations, the queue also supports non-blocking reads as well as two batch-drain operations: \texttt{tryReadAll()} and \texttt{waitAndReadAll()}. These atomically extract all queued messages and serialize them into a compact JSON array, embedding each message’s name, type, sender role, and payload (parsed as JSON when possible, or wrapped as raw text otherwise). The batch is returned as a synthetic \texttt{SNDS\_INTRA\_MESSAGE} with a \texttt{GENERIC} type and a textual “BATCH” envelope, enabling efficient downstream transport or logging without exposing internal queue state. This design provides both low-latency single-message delivery and high-throughput batch extraction under load. Implementation details are available in \texttt{message\_queue.hpp} and \texttt{message\_queue.cpp}.
+
+    
+\end{enumerate}
+
+Additionally, the accompanying header \textit{parsed\_interest\_to\_temporal\_query.hpp} provides a mapping layer that converts parsed NDN Interests into \texttt{TemporalQuery} objects. Each parameter extracted from the Interest—such as \textit{date}, \textit{timeframe}, \textit{count}, and \textit{filters}—is used to populate the corresponding fields of a \texttt{TemporalQuery}. This enables direct translation between Interest name structures and query semantics within the SeEDS framework. The implementation is available in \href{https://github.com/mmlab-aueb/SeEDS/blob/main/src/snds_interest/parsed_interest_to_temporal_query.hpp}{\texttt{parsed\_interest\_to\_temporal\_query.hpp}}.
+
+
+The HTTP Server acts as an intermediary between the IP-based Internet and the NDN network. Upon receiving a request, it distinguishes between \textit{POST} and \textit{GET} methods and parses the corresponding parameters to determine the appropriate NDN operation to execute.
+
+Maintaining this functionality in a scalable and extensible way is essential. A naïve implementation based solely on conditional statements (\textit{if}-chains) would quickly become unmanageable, as each new parameter or request type would require additional hard-coded logic to identify and process it correctly.
+
+To address this issue, a combined C++ \textit{Macro} and \textit{Template} mechanism was developed. This approach enables new parameters to be integrated seamlessly—by simply declaring them—while automatically generating the necessary parsing and request-handling logic. The implementation details of this scheme are beyond the scope of this document but are available in the SeEDS repository:
+\url{https://github.com/mmlab-aueb/SeEDS/blob/main/src/snds_message/snds_message.hpp} and
+\url{https://github.com/mmlab-aueb/SeEDS/blob/main/src/snds_query_params/query_params.hpp}.
+
+
+After parsing the \textit{HTTP Request}
+
+\subsubsection{Announcing Content}
+When the HTTP Server receives a \textit{HTTP POST} request, it means that a content provider has requested to provide content into the NDN network. After receiving the request the HTTP Server parses, whether it has the parameters \textit{@type} and the \textit{@id}. If it contains the \textit{@type} parameter, it means that the \textit{@id} must be announced through the \textit{@type=TYPE} registry. If it doesn't contain it, the system ensures the \textit{@id=ID} is published in the NDN network. Let's call the first case 1. and the second case 2.
+
+For case 1.
+\subsubsection{GET by ID}
+\subsubsection{GET by TYPE}
+\subsubsection{SUBSCRIPTIONS by ID}
+\subsubsection{SUBSCRIPTIONS by TYPE}
+\subsubsection{Resilience}
+
 
 \section{Experiments and KPIs}
 
